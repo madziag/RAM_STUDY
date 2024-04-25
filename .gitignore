@@ -1,0 +1,11 @@
+RAM_scripts/g_intermediate/
+RAM_scripts/g_output/
+.DS_Store
+README.html
+CDMInstances
+CDMInstances_preselect
+.Rhistory
+g_intermediate
+g_output
+.RData
+
