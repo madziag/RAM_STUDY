@@ -97,9 +97,9 @@ if(multiple_regions==T){
   source(paste0(pre_dir,"info.R"))
   source(paste0(pre_dir,"parameters/study_parameters.R"))
   # Sources study_source_population_script.R
-  source(paste0(pre_dir,"2_SourcePopulation/study_source_population_script.R"))
+  source(paste0(pre_dir,"studypopulation/study_source_population_script.R"))
   # Sources run_counts_prelim_each_pop.R 
-  source(paste0(pre_dir,"5_PreliminaryCounts/run_counts_prelim_each_pop.R"))
+  source(paste0(pre_dir,"intermediate/run_counts_prelim_each_pop.R"))
 }
 
 

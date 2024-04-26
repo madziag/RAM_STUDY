@@ -9,7 +9,7 @@
 # 4. Counts records saved in the previous step by month/year for each ATC of Retinoids and/or Valproates 
 # Loads Create Concept Sets file
 matches<-c()
-source(paste0(pre_dir,"5_PreliminaryCounts/create_concept_sets_ATC.R"))
+source(paste0(pre_dir,"conceptsets/create_concept_sets_ATC.R"))
 # Creates empty table for counts 
 # Gets min and max year from denominator file
 FUmonths_df<-as.data.table(FUmonths_df)
@@ -70,8 +70,7 @@ if(length(med_files)>0){
     # Creates year variable 
     df[,year:=year(Date)] 
     df<-df[!is.na(year)] # Removes records with both dates missing
-    # if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
-    df<-df[year>2008 & year<2021]
+    if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
     # Removes records with ATC code missing 
     df<-df[!(is.na(Code))]
     df<-df[sex_at_instance_creation == "M" | sex_at_instance_creation == "F"] # Removes unspecified sex

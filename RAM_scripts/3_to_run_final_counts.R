@@ -62,7 +62,7 @@ DAP_specific_DOT<-T   #### assumed treatment duration for creating treatment epi
 ################################################
 # Final counts + plots
 #################################################
-source(paste0(pre_dir,"run_counts_final.R"))
+source(paste0(pre_dir,"intermediate/run_counts_final.R"))
 
 # BIFAP ONLY pooled masking
 # run_pooling(mask= T)

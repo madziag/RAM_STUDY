@@ -7,13 +7,14 @@
 ## Looks for sterility diagnosis codes in Events and Procedures tables
 ## Looks for sterility procedure codes in Procedures tables (ONLY for CPRD and PHARMO)
 # Sterility records to be used in CreateEntryExit.R
+
 ##################################################################################################################
 ################################# 1. DIAGNOSIS CODES IN EVENTS TABLES ############################################
 ##################################################################################################################
 # Loads sterility codes from Lot4_completediagnosis_codelist_20211110
 matches<-c("sterility")
-source(paste0(pre_dir,"5_PreliminaryCounts/create_concept_sets_dx_codes.R"))
-source(paste0(pre_dir,"5_PreliminaryCounts/excluded_ICD.R"))
+source(paste0(pre_dir,"conceptsets/create_concept_sets_dx_codes.R"))
+source(paste0(pre_dir,"conceptsets/excluded_ICD.R"))
 # Gets list of events tables from CDM/LOT4 folders
 events_files<-list.files(path=path_dir, pattern = "EVENTS", ignore.case = TRUE)
 # Finds sterility codes in events tables 
@@ -45,8 +46,7 @@ if(length(events_files)>0){
     # Creates year variable
     df[,year:=year(Date)] # from the events table (year of event)
     df<-df[!is.na(year)] # Removes records with dates missing
-    # if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
-    df<-df[year>2008 & year<2021]
+    if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
     df<-df[!(is.na(Code) | is.na(Vocabulary))]# Removes records with both event code and event record vocabulary missing
     df<-df[sex_at_instance_creation == "M" | sex_at_instance_creation == "F"] # Removes unspecified sex
     # Exclusion of meanings ### for BIFAP
@@ -194,7 +194,7 @@ if(length(events_files)>0){
 ##################################################################################################################
 # Loads sterility codes from Lot4_completediagnosis_codelist_20211110
 matches<-c("sterility")
-source(paste0(pre_dir,"5_PreliminaryCounts/create_concept_sets_dx_codes.R"))
+source(paste0(pre_dir,"conceptsets/create_concept_sets_dx_codes.R"))
 # Gets list of procedure tables from CDM/LOT4 folders
 proc_files<-list.files(path=path_dir, pattern = "PROCEDURES", ignore.case = TRUE)
 # Finds sterility codes in procedures tables 
@@ -227,8 +227,7 @@ if(length(proc_files)>0){
     # Creates year variable
     df[,year:=year(Date)]
     df<-df[!is.na(year)] # Removes records with both dates missing
-    # if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
-    df<-df[year>2008 & year<2021]
+    if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
     df<-df[!(is.na(Code) | is.na(Vocabulary))]# Removes records with both event code and event record vocabulary missing
     df<-df[sex_at_instance_creation == "M" | sex_at_instance_creation == "F"] # Removes unspecified sex
     # Exclusion of meanings ### for BIFAP
@@ -351,9 +350,9 @@ if(length(proc_files)>0){
 ##################################################################################################################
 ################################# 3. PROCEDURE CODES IN PROCEDURES TABLES ########################################
 ##################################################################################################################
-# Loads sterilisation codes from Procedure_codes.xlsx
+# Loads sterilization codes from Procedure_codes.xlsx
 matches<-c("sterilisation")
-source(paste0(pre_dir,"5_PreliminaryCounts/create_concept_sets_procedure_codes.R"))
+source(paste0(pre_dir,"conceptsets/create_concept_sets_procedure_codes.R"))
 # Gets list of procedure tables from CDM/LOT4 folders
 proc_files<-list.files(path=path_dir, pattern = "PROCEDURES", ignore.case = TRUE)
 # Finds sterility codes in procedures tables 
@@ -385,8 +384,7 @@ if(length(proc_files)>0){
     # Creates year variable
     df[,year:=year(Date)]
     df<-df[!is.na(year)] # Removes records with both dates missing
-    # if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
-    df<-df[year>2008 & year<2021]
+    if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
     df<-df[!(is.na(Code) | is.na(Vocabulary))]# Removes records with both event code and event record vocabulary missing
     df<-df[sex_at_instance_creation == "M" | sex_at_instance_creation == "F"] # Removes unspecified sex
     # Adds column for origin of code i.e. CPRD, PHARMO

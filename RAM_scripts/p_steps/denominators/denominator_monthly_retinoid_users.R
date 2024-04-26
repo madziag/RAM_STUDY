@@ -1,21 +1,23 @@
+# Same code as in denominator_monthly_WOCBP only here it is run on the subset of that population (retinoid users)
+
 # Create a subset of study population who has ever used Retinoids 
 # Read in Retinoid records that were created from monthly counts ATC
-retinoids<-as.data.table(readRDS(paste0(medications_pop, pop_prefix, "_Retinoid_MEDS.rds")))
+retinoid_meds<-as.data.table(readRDS(paste0(medications_pop, pop_prefix, "_Retinoid_MEDS.rds")))
 # Retinoid use should be between study entry and exit to be counted 
-retinoids<-retinoids[Date>=entry_date & Date<=exit_date,]
+retinoid_meds<-retinoid_meds[Date>=entry_date & Date<=exit_date,]
 # remove duplicates
-retinoids<- unique(retinoids, by = c("person_id"))
+retinoid_users<- as.data.table(unique(retinoid_meds, by = c("person_id")))[,c("person_id")]
 # Get study population subset i.e only those who have retinoid prescriptions 
-study_pop_retinoids<-as.data.table(merge(study_population, retinoids[,c("person_id")], by = "person_id")) 
+retinoid_study_population<-as.data.table(merge(study_population, retinoid_users, by = "person_id")) 
 
 # Saves file
-saveRDS(data.table(study_pop_retinoids), paste0(populations_dir, pop_prefix, "_study_population_retinoids.rds"))
+saveRDS(data.table(retinoid_study_population), paste0(populations_dir, pop_prefix, "_retinoid_study_population.rds"))
 # this script counts the number of eligible participants per month (as persons may leave and enter the database)
 
-if(nrow(study_pop_retinoids)>0){
+if(nrow(retinoid_study_population)>0){
   # Sets start and end dates 
-  start.date<-as.Date(study_pop_retinoids$entry_date)
-  end.date<-as.Date(study_pop_retinoids$exit_date)
+  start.date<-as.Date(retinoid_study_population$entry_date)
+  end.date<-as.Date(retinoid_study_population$exit_date)
   # Converts to yearmon
   ym1<-as.yearmon(as.character(start.date), "%Y-%m-%d") 
   ym2<-as.yearmon(as.character(end.date), "%Y-%m-%d") 
@@ -27,8 +29,7 @@ if(nrow(study_pop_retinoids)>0){
     FUmonths[[i]]<-s
   }
   FUmonths<-unlist(FUmonths)
-  # if(is_PHARMO) {studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=201912)]} else {studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=202012)]}
-  studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=202012)]
+  if(is_PHARMO) {studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=201912)]} else {studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=202012)]}
   FUmonths_df_retinoid<-as.data.frame(table(studyFUmonths))
   FUmonths_df_retinoid$YM<-as.Date(paste0(as.character(FUmonths_df_retinoid$studyFUmonths),"01"), format="%Y%m%d")
   FUmonths_df_retinoid$YM<-format(as.Date(FUmonths_df_retinoid$YM),"%Y-%m")
@@ -50,7 +51,7 @@ if(nrow(study_pop_retinoids)>0){
   # Saves file
   saveRDS(data.table(FUmonths_df_retinoid), paste0(output_dir, pop_prefix, "_denominator_retinoid.rds"))
   # plots denominator 
-  pdf((paste0(output_dir, "plots/", pop_prefix ,"_denominator_retinoid.pdf")), width=8, height=4)
+  pdf((paste0(output_dir, "plots/", pop_prefix ,"_retinoid_denominator.pdf")), width=8, height=4)
   plot(FUmonths_df_retinoid$studyFUmonths, FUmonths_df_retinoid$Freq, ylab="Persons Observed per Month", xlab="Year and Month")
   invisible(dev.off())
 }

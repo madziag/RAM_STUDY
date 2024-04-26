@@ -47,7 +47,7 @@ my_format<-"csv"
 ################################################
 #Study_source_population + counts + plots
 #################################################
-source(paste0(pre_dir,"run_counts_prelim.R"))
+source(paste0(pre_dir,"intermediate/run_counts_prelim.R"))
 
 ###########################################
 # clear g_intermediate 

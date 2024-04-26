@@ -90,17 +90,17 @@ source(paste0(pre_dir,"functions/", "CountPersonTimeV13.6.R"))
 source(paste0(pre_dir,"functions/", "FUNCTIONS.R"))
 
 #Set parameters
-source(paste0(pre_dir,"2_SourcePopulation/Step_00_SetParameters.R"))
+source(paste0(pre_dir,"studypopulation/Step_00_SetParameters.R"))
 
 #Preparation of analyses input tables
-source(paste0(pre_dir,"2_SourcePopulation/Step_01_CreateSpells.R"))
-source(paste0(pre_dir,"2_SourcePopulation/Step_02_PreparePersonsTable.R"))
-source(paste0(pre_dir,"2_SourcePopulation/Step_03_CreateSourceTable.R"))
-source(paste0(pre_dir,"2_SourcePopulation/Step_04_CreateStudyPopulation.R"))
+source(paste0(pre_dir,"studypopulation/Step_01_CreateSpells.R"))
+source(paste0(pre_dir,"studypopulation/Step_02_PreparePersonsTable.R"))
+source(paste0(pre_dir,"studypopulation/Step_03_CreateSourceTable.R"))
+source(paste0(pre_dir,"studypopulation/Step_04_CreateStudyPopulation.R"))
 
-source(paste0(pre_dir,"2_SourcePopulation/Step_05_AddVariablesSourcePopulation.R"))
-source(paste0(pre_dir,"2_SourcePopulation/Step_06_AddVariablesStudyPopulation.R"))
-source(paste0(pre_dir,"2_SourcePopulation/Step_07_RunCountPersonTime.R"))
+source(paste0(pre_dir,"studypopulation/Step_05_AddVariablesSourcePopulation.R"))
+source(paste0(pre_dir,"studypopulation/Step_06_AddVariablesStudyPopulation.R"))
+source(paste0(pre_dir,"studypopulation/Step_07_RunCountPersonTime.R"))
 
 # Clean up
 rm(list = grep("^actual|^FlowChart|METADATA_subp|^OBSERVATION|^op_meaning|SOURCE|SelectionCriteria|subpopulation_meanings", ls(), value = TRUE))

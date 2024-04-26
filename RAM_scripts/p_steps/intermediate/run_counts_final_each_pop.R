@@ -13,50 +13,38 @@
 
 # Loads study population/populations 
 populations<-list.files(populations_dir, pattern = "study_population")
-populations<-populations[grepl("study_population.rds", populations)]
-
-# Checks for study type
-if(study_type =="Retinoid"){pattern_meds = c("Retinoid")}else{print("Please indicate Study Type")}
-
+populations<-populations[grepl("retinoid", populations)]
 # Move denominator file to tmp folder
 for(file in list.files(path=output_dir, pattern="denominator", ignore.case = T)){file.move(paste0(output_dir,file), paste0(paste0(tmp, "/") ,file))}
 
 # Loops over each subpopulation
 for(pop in 1:length(populations)){
   # Loads study population
-  study_population<-readRDS(paste0(populations_dir, populations[pop]))
+  retinoid_study_population<-readRDS(paste0(populations_dir, populations[pop]))
   # Make sure last exit data is 2019 if DAP == "PHARMO"
-  # if(is_PHARMO){study_population<-study_population[year(study_population$exit_date) < 2020,]}else{study_population<-study_population}
+  if(is_PHARMO){retinoid_study_population<-retinoid_study_population[year(retinoid_study_population$exit_date) < 2020,]}else{retinoid_study_population<-retinoid_study_population}
   # Assign study population prefix name
-  pop_prefix<-gsub("_study_population.rds", "", populations[pop])
-  # # Loads files with matching pattern 
-  med_files<-list.files(path=medications_pop, pattern=paste0(pattern_meds, collapse="|"))
-  if(pop_prefix == "PC"){med_files<-med_files[!grepl("PC_HOSP",med_files)]}
-  if(pop_prefix == "PC_HOSP"){med_files<-med_files[grepl("PC_HOSP",med_files)]}
-  
-  if(length(med_files)>0){
-    # Reads in records of population with indicated study type
-    study_pop_meds<-do.call(rbind,lapply(paste0(medications_pop,"/",med_files), readRDS))
+  pop_prefix<-gsub("_retinoid_study_population.rds", "", populations[pop])
+
+  if(length(nrow(retinoid_study_population))>0){
     # Creates Retinoid treatment episodes 
-    source(paste0(pre_dir, "6_TreatmentEpisodes/treatment_episodes.R"))
-    # Creates Altmed treatment episodes in Retinoid Users 
-    source(paste0(pre_dir, "6_TreatmentEpisodes/treatment_episodes_RAM.R"))
+    source(paste0(pre_dir, "treatmentepisodes/retinoid_treatment_episodes.R"))
+    # Creates RAM treatment episodes in Retinoid Users 
+    source(paste0(pre_dir, "treatmentepisodes/RAM_treatment_episodes.R"))
     # Counts of prevalence, incidence, discontinuation - medicines use
-    source(paste0(pre_dir, "7_FinalCounts/medicine_counts_incidence_prevalence_discontinuation.R"))
+    source(paste0(pre_dir, "counts/retinoid_incidence_prevalence_discontinuation.R"))
     # Counts of prevalence, incidence, discontinuation - medicines use
-    source(paste0(pre_dir, "7_FinalCounts/Obj1_RAM_incidence_prevalence_counts.R"))
-    # Counts discontinued
-    source(paste0(pre_dir, "7_FinalCounts/Obj2_RAM_discontinued_counts.R"))
-    # Counts switchers
-    source(paste0(pre_dir, "7_FinalCounts/Obj2_RAM_switcher_counts.R"))
-    # Counts concomitance: general and contraindicated 
-    source(paste0(pre_dir, "7_FinalCounts/Obj3_RAM_concomitance_counts.R"))
-    # Counts concomitance: teratogenic 
-    source(paste0(pre_dir, "7_FinalCounts/Obj4_RAM_teratogenic_concomitance_counts.R"))
-    # Counts unrelated 
-    source(paste0(pre_dir, "7_FinalCounts/unrelated_counts.R"))
-    # Creates baseline tables #
-    # source(paste0(pre_dir,"7_FinalCounts/create_baseline_tables.R"))
+    source(paste0(pre_dir, "counts/RAM_incidence_prevalence_discontinuation.R"))
+    # Counts of switchers and general concomitance 
+    source(paste0(pre_dir, "counts/RAM_switching.R"))
+    # Counts concomitance: general 
+    source(paste0(pre_dir, "counts/RAM_concomitance_counts.R"))
+    # # Counts concomitance: teratogenic 
+    # source(paste0(pre_dir, "7_FinalCounts/Obj4_RAM_teratogenic_concomitance_counts.R"))
+    # # Counts unrelated 
+    # source(paste0(pre_dir, "7_FinalCounts/unrelated_counts.R"))
+    # # Creates baseline tables #
+    # # source(paste0(pre_dir,"7_FinalCounts/create_baseline_tables.R"))
 
 
 

@@ -43,16 +43,14 @@ if (length(list.files(paste0(g_intermediate,"tmp/sterility/"), pattern = "steril
   sterility[,person_id:=as.character(person_id)]
   study_population<-sterility[study_population,on=.(person_id)] # Left join
   # Looks for min date of all chosen columns
-  #if (is_PHARMO){study_population$end_date<-as.IDate(as.character(20191231), "%Y%m%d")} else {study_population$end_date<-as.IDate(as.character(20201231), "%Y%m%d")}
-  study_population$end_date<-as.IDate(as.character(20201231), "%Y%m%d")
+  if (is_PHARMO){study_population$end_date<-as.IDate(as.character(20191231), "%Y%m%d")} else {study_population$end_date<-as.IDate(as.character(20201231), "%Y%m%d")}
   study_population$exit_date<-pmin(study_population$date_max, study_population$spell_end_date, study_population$end_date,study_population$Sterility_Date, na.rm = TRUE)
   study_population$exit_date<-as.Date(study_population$exit_date, "%Y%m%d")
   summary(study_population$exit_date)
   print("exit date OK")
 } else {
   # Determines exit date (excluding sterility records )
-  # if (is_PHARMO){study_population$end_date<-as.IDate(as.character(20191231), "%Y%m%d")} else {study_population$end_date<-as.IDate(as.character(20201231), "%Y%m%d")}
-  study_population$end_date<-as.IDate(as.character(20201231), "%Y%m%d")
+  if (is_PHARMO){study_population$end_date<-as.IDate(as.character(20191231), "%Y%m%d")} else {study_population$end_date<-as.IDate(as.character(20201231), "%Y%m%d")}
   study_population$exit_date<-pmin(study_population$date_max, study_population$spell_end_date, study_population$end_date, na.rm = TRUE)
   study_population$exit_date<-as.Date(study_population$exit_date, "%Y%m%d")
   summary(study_population$exit_date)

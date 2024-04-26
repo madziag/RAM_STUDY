@@ -32,6 +32,15 @@ invisible(ifelse(!dir.exists(paste0(g_intermediate, "/tmp", sep="")), dir.create
 tmp<-paste0(g_intermediate,"tmp/")
 invisible(ifelse(!dir.exists(paste0(g_intermediate, "/counts_dfs", sep="")), dir.create(paste0(g_intermediate, "/counts_dfs")), FALSE))
 counts_dfs_dir<-paste0(g_intermediate,"counts_dfs/")
+# Create folder to store incidence, prevalence and discontinued individual level records 
+invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"retinoid_counts")),dir.create(paste0(counts_dfs_dir,"retinoid_counts")),FALSE))
+retinoid_counts_dfs<-paste0(counts_dfs_dir,"retinoid_counts/")
+
+# Creates treatment episodes directories
+invisible(ifelse(!dir.exists(paste0(g_intermediate,"/retinoid_treatment_episodes")), dir.create(paste0(g_intermediate,"/retinoid_treatment_episodes")), FALSE))
+retinoid_treatment_episodes<-paste0(g_intermediate,"retinoid_treatment_episodes/")
+invisible(ifelse(!dir.exists(paste0(g_intermediate,"/RAM_treatment_episodes")), dir.create(paste0(g_intermediate,"/RAM_treatment_episodes")), FALSE))
+RAM_treatment_episodes<-paste0(g_intermediate,"RAM_treatment_episodes/")
 # Folders in g_intermediate/tmp
 # CONCEPT SET FOLDERS
 invisible(ifelse(!dir.exists(paste0(tmp, "conceptsets_dx")), dir.create(paste0(tmp, "conceptsets_dx")), FALSE))
@@ -48,6 +57,7 @@ events_tmp_ATC<-paste0(tmp, "events_atc/")
 # Permanent folder
 invisible(ifelse(!dir.exists(paste0(tmp, "medications")), dir.create(paste0(tmp, "medications")), FALSE))
 medications_pop<-paste0(tmp, "medications/")
+
 # Monthly counts
 invisible(ifelse(!dir.exists(paste0(output_dir, "monthly_counts_atc")), dir.create(paste0(output_dir, "monthly_counts_atc")), FALSE))
 monthly_counts_atc<-paste0(output_dir, "monthly_counts_atc")
@@ -86,7 +96,32 @@ medicines_stratified_age_groups<-paste0(medicines_stratified_dir ,"/","age_group
 invisible(ifelse(!dir.exists(paste0(medicines_stratified_dir,"/","indication")), dir.create(paste0(medicines_stratified_dir,"/","indication")), FALSE))
 medicines_stratified_indication<-paste0(medicines_stratified_dir ,"/","indication")
 
+# To save incidence and prevalence patient level records  
+invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"RAM_Objective_1")),dir.create(paste0(counts_dfs_dir,"RAM_Objective_1")),FALSE))
+objective1_temp_dir<-paste0(counts_dfs_dir,"RAM_Objective_1/")
+# To save incidence and prevalence counts/rates
+invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_1")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_1")),FALSE))
+objective1_dir<-paste0(medicines_counts_dir,"/RAM_Objective_1")
+# To save incidence and prevalence stratified counts
+invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_1/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_1/Stratified")),FALSE))
+objective1_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_1/Stratified")
 
+# To save switching and discontinued patient level records  
+invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"RAM_Objective_2")),dir.create(paste0(counts_dfs_dir,"RAM_Objective_2")),FALSE))
+objective2_temp_dir<-paste0(counts_dfs_dir,"RAM_Objective_2/")
+# To save switching and discontinued counts/rates
+invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_2")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_2")),FALSE))
+objective2_dir<-paste0(medicines_counts_dir,"/RAM_Objective_2")
+# To save switching and discontinued stratified counts
+invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_2/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_2/Stratified")),FALSE))
+objective2_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_2/Stratified")
 
-
-
+# To save concomitance patient level records  
+invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"RAM_Objective_3")),dir.create(paste0(counts_dfs_dir,"RAM_Objective_3")),FALSE))
+objective3_temp_dir<-paste0(counts_dfs_dir,"RAM_Objective_3/")
+# To save concomitance patient level records  
+invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_3")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_3")),FALSE))
+objective3_dir<-paste0(medicines_counts_dir,"/RAM_Objective_3")
+# To save concomitance patient level records  
+invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")),FALSE))
+objective3_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")

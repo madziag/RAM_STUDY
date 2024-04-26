@@ -9,7 +9,8 @@
 
 # Loads study population/populations 
 populations<-list.files(populations_dir, pattern = "study_population")
-populations<-populations[grepl("study_population.rds", populations)]
+populations<-populations[!grepl("retinoid", populations)]
+
 # Loops over each subpopulation
 for(pop in 1:length(populations)){
   # Loads study population
@@ -17,15 +18,15 @@ for(pop in 1:length(populations)){
   # Assign study population prefix name
   pop_prefix<-gsub("_study_population.rds", "", populations[pop])
   # Creates sterility list 
-  source(paste0(pre_dir,"3_Sterility/create_sterility_list.R"))
+  source(paste0(pre_dir,"sterility/create_sterility_list.R"))
   # Creates entry and exit dates
-  source(paste0(pre_dir,"4_Denominator/create_entry_exit.R"))
+  source(paste0(pre_dir,"denominators/create_entry_exit.R"))
   # Creates denominator file
-  source(paste0(pre_dir,"4_Denominator/denominator_monthly.R"))
+  source(paste0(pre_dir,"denominators/denominator_monthly_WOCBP.R"))
   # Finds records matching retinoid and RAM ATCs - creates dataset of all retinoids and RAMS in study population 
-  source(paste0(pre_dir,"5_PreliminaryCounts/monthly_counts_ATC.R")) # This creates datasets of Retinoids as well as RAMs
+  source(paste0(pre_dir,"counts/monthly_counts_ATC.R")) # This creates datasets of Retinoids as well as RAMs
   # Creates denominator file
-  source(paste0(pre_dir,"4_Denominator/denominator_monthly_retinoid_users.R"))
+  source(paste0(pre_dir,"denominators/denominator_monthly_retinoid_users.R"))
   }
 
 # Moves all counts, plots, formatted files to preliminary_counts folder

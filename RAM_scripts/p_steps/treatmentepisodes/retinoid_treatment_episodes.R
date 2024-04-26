@@ -4,29 +4,19 @@
 #Date: 18/12/2021
 
 # This script does two things:
-# 1. it loads valproate or retinoid concept set data sets created by running "to_run_source_pop_counts.R", for separate subpopulations and regions if necessary.
+# 1. it loads retinoid concept set data sets created by running "to_run_source_pop_counts.R", for separate subpopulations and regions if necessary.
 # It then applys createDOT or a fixed duration value to create an estimated end date of treatment for every record
 # 2. It creates a new data frame where each row is not a record, but instead a treatment episode.
 
 #INPUTS 
-#study_type (Retinoids, Valproates, Both)
-#Retinoid.rds or Valproate.rds or both
+#Retinoid.rds
 
-# Creates treatment episodes directory
-invisible(ifelse(!dir.exists(paste0(g_intermediate,"treatment_episodes")), dir.create(paste0(g_intermediate,"treatment_episodes")), FALSE))
-# Looks for retinoid/valproate files in medications folder 
-my_retinoid<-list.files(paste0(tmp,"medications/"), pattern=paste0(pop_prefix, "_Retinoid"))
+# Reads in Retinoid medication data
+retinoid_meds<-readRDS(paste0(medications_pop, pop_prefix, "_Retinoid_MEDS.rds"))
+my_name<-levels(factor(retinoid_meds$Code))
+split_data<-split(retinoid_meds, retinoid_meds$Code)
 
-# Loads files based on study type
-### Study type == Retinoids
-if(study_type=="Retinoid") {
-  my_data<-readRDS(paste0(tmp, "medications/",my_retinoid))
-  all_data<-my_data
-  my_name<-levels(factor(my_data$Code))
-  split_data<-split(all_data, all_data$Code)
-}
-
-# Loops over each retinoid/valproate ATC codes -> creates treatment episodes for each unique code 
+# Loops over each retinoid ATC codes -> creates treatment episodes for each unique code 
 for (i in 1:length(split_data)){
   
   cma_data<-split_data[[i]]
@@ -37,7 +27,7 @@ for (i in 1:length(split_data)){
   
   cma_data$Date<-as.Date(cma_data$Date, format="%Y%m%d")
   # Creates treatment episodes
-  my_treat_episode<-compute.treatment.episodes(data= cma_data,
+  treat_episode<-compute.treatment.episodes(data= cma_data,
                                                ID.colname = "person_id",
                                                event.date.colname = "Date",
                                                event.duration.colname = "assumed_duration",
@@ -67,52 +57,51 @@ for (i in 1:length(split_data)){
   ) 
   
   # Converts treatment episode to data table
-  my_treat_episode<-as.data.table(my_treat_episode)
+  treat_episode<-as.data.table(treat_episode)
   # Converts date values to IDate format
-  my_treat_episode[,episode.start:= as.IDate(episode.start,"%Y%m%d")][,episode.end:= as.IDate(episode.end,"%Y%m%d")]
+  treat_episode[,episode.start:= as.IDate(episode.start,"%Y%m%d")][,episode.end:= as.IDate(episode.end,"%Y%m%d")]
   # Merges with study population to get entry and exit dates (study population has been loaded in the wrapper script)
-  my_treat_episode1<-as.data.table(merge(my_treat_episode, study_population[,c("person_id", "entry_date","exit_date")], by = "person_id"))
+  treat_episode1<-as.data.table(merge(treat_episode, retinoid_study_population[,c("person_id", "entry_date","exit_date")], by = "person_id"))
   # Exclude rows where episode.end is before entry.date-90
   # Therefore, keep records that have a episode.start < entry.date, unless the above exclusion criterion is met  
-  my_treat_episode1<-my_treat_episode1[episode.end > entry_date - 90,]
+  treat_episode1<-treat_episode1[episode.end > entry_date - 90,]
   #  IF (episode.end > exit.date) {episode.end<-exit.date}
-  my_treat_episode1<-my_treat_episode1[episode.end > exit_date, episode.end:= exit_date]
+  treat_episode1<-treat_episode1[episode.end > exit_date, episode.end:= exit_date]
   #  IF (episode.start >= exit.date) EXCLUDE row
-  my_treat_episode1<-my_treat_episode1[episode.start < exit_date,]
+  treat_episode1<-treat_episode1[episode.start < exit_date,]
   # Episode end must be > than episode.start
-  my_treat_episode1<-my_treat_episode1[episode.end > episode.start,]
+  treat_episode1<-treat_episode1[episode.end > episode.start,]
   # Add column for ATC code 
-  my_treat_episode1[,ATC:=ATC_code]
+  treat_episode1[,ATC:=ATC_code]
   # Remove unnecessary rows
-  my_treat_episode1[,entry_date:=NULL][,exit_date:=NULL]
+  treat_episode1[,entry_date:=NULL][,exit_date:=NULL]
   
   # Saves files (only if df is not empty)
-  if (nrow(my_treat_episode1)>0){
-    saveRDS(my_treat_episode1, (paste0(g_intermediate, "treatment_episodes/", pop_prefix, "_", my_name[i],"_CMA_treatment_episodes.rds")))
-    saveRDS(summary(my_treat_episode1), (paste0(g_intermediate, "treatment_episodes/", pop_prefix, "_", my_name[i],"_summary_treatment_episodes.rds")))
+  if (nrow(treat_episode1)>0){
+    saveRDS(treat_episode1, (paste0(retinoid_treatment_episodes, pop_prefix, "_", my_name[i],"_CMA_retinoid_treatment_episodes.rds")))
+    saveRDS(summary(treat_episode1), (paste0(retinoid_treatment_episodes, pop_prefix, "_", my_name[i],"_summary_retinoid_treatment_episodes.rds")))
   }
 }
 
-# Binds all retinoid/valproate treatment episodes to one
+# Binds all retinoidtreatment episodes to one
 # Gets a list of all files in treatment episode folder 
-my_files<-list.files(paste0(g_intermediate, "treatment_episodes/"), pattern="CMA")
-if(pop_prefix == "PC"){my_files<-my_files[!grepl("PC_HOSP", my_files)]}
-if(pop_prefix == "PC_HOSP"){my_files<-my_files[grepl("PC_HOSP", my_files)]}
+retinoid_episode_files<-list.files(retinoid_treatment_episodes, pattern="CMA")
+if(pop_prefix == "PC"){retinoid_episode_files<-retinoid_episode_files[!grepl("PC_HOSP", retinoid_episode_files)]}
+if(pop_prefix == "PC_HOSP"){retinoid_episode_files<-retinoid_episode_files[grepl("PC_HOSP", retinoid_episode_files)]}
 
 ## Retinoid files 
-retinoid_files<-my_files[grepl(c("D05BB02|D11AH04|D10BA01"), my_files)]
+retinoid_episode_files<-retinoid_episode_files[grepl(c("D05BB02|D11AH04|D10BA01"), retinoid_episode_files)]
+
 # Checks if any Retinoid treatment episodes in list
-if(length(retinoid_files)>0){
-  # Loads files
-  all_ret_list<-lapply(paste0(g_intermediate, "treatment_episodes/", retinoid_files), readRDS)
-  # Binds files 
-  all_ret<-rbindlist(all_ret_list)
+if(length(retinoid_episode_files)>0){
+  # Binds all retinoid files 
+  retinoid_episodes<-rbindlist(lapply(paste0(retinoid_treatment_episodes, retinoid_episode_files), readRDS))
   # Saves files: result is Retinoid treatment episodes (for all retinoid ATC codes - D05BB02|D11AH04|D10BA01)
-  if(nrow(all_ret>0)){saveRDS(all_ret, (paste0(g_intermediate, "treatment_episodes/", pop_prefix, "_Retinoid_CMA_treatment_episodes.rds")))}
+  if(nrow(retinoid_episodes>0)){saveRDS(retinoid_episodes, (paste0(retinoid_treatment_episodes, pop_prefix, "_Retinoid_CMA_treatment_episodes.rds")))}
 }
 
 # Clean up 
-rm(list= grep("^all_|my_data|^my_treat|my_files|my_name|my_retinoid|^cma_|^split", ls(), value = TRUE))
+rm(list= grep("^actual|^cma|^split|^treat", ls(), value = TRUE))
 
 
 

@@ -105,7 +105,7 @@ if(multiple_regions == T){
   source(paste0(pre_dir,"info.R"))
   source(paste0(pre_dir,"parameters/study_parameters.R"))
   # Sources run_counts_final_each_pop.R 
-  source(paste0(pre_dir,"7_FinalCounts/run_counts_final_each_pop.R"))
+  source(paste0(pre_dir,"intermediate/run_counts_final_each_pop.R"))
 }
 
 

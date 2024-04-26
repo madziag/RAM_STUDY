@@ -18,6 +18,6 @@ setwd(projectFolder)
 #3) contain eligible base ATC codes 
 ###############################################
 source("99_path.R")
-source(paste0(projectFolder, "/p_steps/1_Preselect/preselect.R"))
+source(paste0(projectFolder, "/p_steps/preselect/preselect.R"))
 
 #writes new files to CDMInstances_preselect

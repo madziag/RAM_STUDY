@@ -21,8 +21,7 @@ if(nrow(study_population)>0){
     FUmonths[[i]]<-s
   }
   FUmonths<-unlist(FUmonths)
-  # if(is_PHARMO) {studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=201912)]} else {studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=202012)]}
-  studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=202012)]
+  if(is_PHARMO) {studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=201912)]} else {studyFUmonths<-FUmonths[(FUmonths>=200901)&(FUmonths<=202012)]}
   FUmonths_df<-as.data.frame(table(studyFUmonths))
   FUmonths_df$YM<-as.Date(paste0(as.character(FUmonths_df$studyFUmonths),"01"), format="%Y%m%d")
   FUmonths_df$YM<-format(as.Date(FUmonths_df$YM),"%Y-%m")
@@ -44,7 +43,7 @@ if(nrow(study_population)>0){
   # Saves file
   saveRDS(data.table(FUmonths_df), paste0(output_dir, pop_prefix, "_denominator.rds"))
   # plots denominator 
-  pdf((paste0(output_dir, "plots/", pop_prefix ,"_denominator.pdf")), width=8, height=4)
+  pdf((paste0(output_dir, "plots/", pop_prefix ,"_WOCBP_denominator.pdf")), width=8, height=4)
   plot(FUmonths_df$studyFUmonths, FUmonths_df$Freq, ylab="Persons Observed per Month", xlab="Year and Month")
   invisible(dev.off())
 }
