@@ -44,6 +44,7 @@ RAM_incidence_data[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDa
 setnames(RAM_incidence_data, old = c("episode.start","episode.end","ATC"), new = c("episode.start.RAM","episode.end.RAM","ATC.RAM"))
 # Remove duplicates
 RAM_incidence_data<-unique(RAM_incidence_data, by = c("person_id", "episode.start.RAM", "episode.end.RAM"))
+
 ## Retinoid Discontinuation data
 retinoid_discontinued_data<-retinoid_discontinued_data[,c("person_id", "episode.start", "episode.end", "ATC")]
 # Change date format
@@ -67,25 +68,6 @@ setnames(retinoid_discontinued_counts,"N", "Freq")
 RAM_retinoid_use<-merge(RAM_incidence_data, retinoid_discontinued_data, by="person_id", allow.cartesian=TRUE)
 RAM_retinoid_use<-RAM_retinoid_use[episode.start.RAM>=entry_date & episode.start.RAM<=exit_date,]
 
-### Compare Retinoid and RAM episode dates to see if switching occured
-## TESTING DATA FRAME #####
-library(readxl)
-TestData <- as.data.table(read_excel("C:/Users/mgamb/Desktop/TestData.xlsx",
-                                     col_types = c("text", "date", "date",
-                                                   "date", "date", "numeric", "numeric",
-                                                   "numeric", "text", "date", "numeric",
-                                                   "numeric", "numeric", "text", "date")))
-
-
-RAM_retinoid_use <-as.data.table(TestData)
-RAM_retinoid_use[,episode.start.retinoid:=as.IDate(episode.start.retinoid)]
-RAM_retinoid_use[,episode.end.retinoid:=as.IDate(episode.end.retinoid)]
-RAM_retinoid_use[,next.episode.start.retinoid :=as.IDate(next.episode.start.retinoid)]
-RAM_retinoid_use[,episode.start.RAM:=as.IDate(episode.start.RAM)]
-RAM_retinoid_use[,episode.end.RAM:=as.IDate(episode.end.RAM)]
-
-
-
 # Get the switchers
 RAM_retinoid_use[,switcher:=ifelse(episode.start.RAM>episode.end.retinoid & episode.start.RAM-episode.end.retinoid <90, 1, 
                               ifelse(episode.start.RAM==episode.end.retinoid, 1,
@@ -94,9 +76,6 @@ RAM_retinoid_use[,switcher:=ifelse(episode.start.RAM>episode.end.retinoid & epis
 RAM_switcher <- RAM_retinoid_use[switcher==1,]
 
 if(nrow(RAM_switcher)>0){
-  # Merges with study population to get entry and exit dates
-  RAM_switcher<-merge(RAM_switcher, retinoid_study_population[,c("person_id", "entry_date","exit_date")], by = "person_id")
-  RAM_switcher[,birth_date:=as.IDate(birth_date)]
   # Create column with patients age at episode.start
   RAM_switcher[,current_age:= floor((episode.start.RAM - birth_date)*10/365.25)/10]
   # We change the min of age group 12-20.99 to 11 to assign a group to those with tx days in 2009 (otherwise it would fall in a group that is not defined)
@@ -104,12 +83,17 @@ if(nrow(RAM_switcher)>0){
   RAM_switcher[current_age >= 21 & current_age < 31, age_group:= "21-30.99"]
   RAM_switcher[current_age >= 31 & current_age < 41, age_group:= "31-40.99"]
   RAM_switcher[current_age >= 41 & current_age < 56, age_group:= "41-55.99"]
-  # Removes all episode ends that fall outside entry_date and exit_date
-  RAM_switcher<-RAM_switcher[episode.start.RAM>entry_date & episode.start.RAM<=exit_date,]
-  
-  ### Switcher Version 1: Denominator => Retinoid Prevalence ###
   # Creates year and month columns
   RAM_switcher[,year:=year(episode.start.RAM)][,month:=month(episode.start.RAM)]
+  # Removes all episode ends that fall outside entry_date and exit_date
+  RAM_switcher<-RAM_switcher[episode.start.RAM>entry_date & episode.start.RAM<=exit_date,]
+  # Drop unnecessary columns
+  RAM_switcher<-RAM_switcher[,-c("switcher")]
+  # rearrange columns
+  setcolorder(RAM_switcher, c("person_id", "episode.start.RAM","episode.end.RAM","ATC.RAM","episode.start.retinoid","episode.end.retinoid","ATC.retinoid","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
+  
+  ### Switcher Version 1: Denominator => Retinoid Prevalence ###
+
   # Switching Counts 
   RAM_switcher_counts<-RAM_switcher[,.N, by = .(year,month)]
   # Adjust for PHARMO

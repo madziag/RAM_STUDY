@@ -38,9 +38,11 @@ for(pop in 1:length(populations)){
     # Counts of switchers and general concomitance 
     source(paste0(pre_dir, "counts/RAM_switching.R"))
     # Counts concomitance: general 
-    source(paste0(pre_dir, "counts/RAM_concomitance_counts.R"))
-    # # Counts concomitance: teratogenic 
-    # source(paste0(pre_dir, "7_FinalCounts/Obj4_RAM_teratogenic_concomitance_counts.R"))
+    source(paste0(pre_dir, "counts/RAM_general_concomitance_counts.R"))
+    # Counts contraindicated RAMs
+    source(paste0(pre_dir, "counts/RAM_contraindicated.R"))
+    # Counts concomitance: teratogenic 
+    source(paste0(pre_dir, "counts/RAM_teratogenic.R"))
     # # Counts unrelated 
     # source(paste0(pre_dir, "7_FinalCounts/unrelated_counts.R"))
     # # Creates baseline tables #

@@ -45,8 +45,8 @@ retinoid_episodes<-readRDS(paste0(retinoid_treatment_episodes, pop_prefix, "_Ret
 retinoid_episodes<-merge(retinoid_episodes, retinoid_study_population[,c("person_id", "birth_date", "entry_date","exit_date")], by = "person_id")
 # Changes columns to correct data type/add column that indicates rownumber
 retinoid_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
-# Removes not needed columns
-retinoid_episodes<-retinoid_episodes[,-c("end.episode.gap.days", "episode.duration")]
+# # Removes not needed columns
+# retinoid_episodes<-retinoid_episodes[,-c("end.episode.gap.days", "episode.duration")]
 # Add row numbers to each row 
 retinoid_episodes[,rowID:=.I]
 # Creates a version of df_episodes for incidence counts (we do not need an expanded df for incidence counts)
@@ -59,8 +59,6 @@ retinoid_episodes_expanded<-setDT(retinoid_episodes)[,list(idnum = person_id, ep
 retinoid_episodes_expanded<- merge(retinoid_episodes, retinoid_episodes_expanded, by = "rowID")
 # Create year-months columns based on episode.day
 retinoid_episodes_expanded[,year:=year(episode.day)][,month:=month(episode.day)]
-# Removes unnecessary columns
-retinoid_episodes_expanded<-retinoid_episodes_expanded[,-c("birth_date", "idnum", "episode.ID")]
 
 ##################################################################################################
 ################################## Calculates Prevalence  ########################################
@@ -71,6 +69,8 @@ retinoid_episodes_expanded<-retinoid_episodes_expanded[,-c("birth_date", "idnum"
 retinoid_prevalence<-retinoid_episodes_expanded[!duplicated(retinoid_episodes_expanded[,c("person_id", "episode.start", "year", "month")])]
 # Removes any records where episode.day falls outside of entry & exit dates
 retinoid_prevalence<-retinoid_prevalence[episode.day>=entry_date & episode.day<=exit_date,]
+# Removes unnecessary columns
+retinoid_prevalence<-retinoid_prevalence[,-c("rowID", "idnum", "episode.day")]
 # Prevalence Counts
 retinoid_prevalence_counts<-retinoid_prevalence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -110,6 +110,8 @@ retinoid_incidence<-retinoid_incidence[, head(.SD, 1), by = "person_id"]
 retinoid_incidence<-retinoid_incidence[episode.start >= entry_date & episode.start<=exit_date,]
 # Creates year and month columns
 retinoid_incidence[,year:=year(episode.start)][,month:=month(episode.start)]
+# Removes unnecessary columns
+retinoid_incidence<-retinoid_incidence[,-c("rowID")]
 # Incidence Counts
 retinoid_incidence_counts<-retinoid_incidence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -160,6 +162,8 @@ retinoid_discontinued<-retinoid_discontinued[discontinued == 1,]
 retinoid_discontinued<-retinoid_discontinued[episode.end>entry_date & episode.end<=exit_date,]
 # Creates year and month columns
 retinoid_discontinued[,year:=year(episode.end)][,month:=month(episode.end)]
+# Removes unnecessary columns
+retinoid_discontinued<-retinoid_discontinued[,-c("rowID", "next.episode.start", "discontinued")]
 # Performs discontinued counts 
 retinoid_discontinued_counts<-retinoid_discontinued[,.N, by = .(year,month)]
 # Adjust for PHARMO

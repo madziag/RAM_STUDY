@@ -21,39 +21,39 @@
 ################################## Data Preparation #########################################
 #############################################################################################
 ### Data Loading
-## RAM Incident data
-RAM_episodes<-as.data.table(readRDS(paste0(RAM_treatment_episodes, pop_prefix,"_RAM_CMA_treatment_episodes.rds")))
-## Retinoid Discontinuation data 
-retinoid_episodes<-as.data.table(readRDS(paste0(retinoid_treatment_episodes, pop_prefix,"_Retinoid_CMA_treatment_episodes.rds")))
+## RAM Prevalent Data (dedpuplicated)
+RAM_prevalence_data<-as.data.table(readRDS(paste0(objective1_temp_dir, pop_prefix,"_RAM_prevalence_data.rds")))
+## Retinoid Prevalent Data (deduplicated)
+retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
 ## Denominators 
 # Retinoid Prevalent Counts
 retinoid_prevalence_counts<-as.data.table(readRDS(paste0(medicines_counts_dir, "/",pop_prefix, "_Retinoid_prevalence_counts.rds")))
 
 
-
-  
 ### Data Cleaning 
-## RAM Treatment Episodes
-# Drop unneeded columns
-RAM_episodes<-RAM_episodes[,c("person_id", "episode.start", "episode.end",  "ATC")]
-# Change date format
-RAM_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)]
-# Rename columns
-setnames(RAM_episodes, old = c("episode.start","episode.end","ATC"), new = c("episode.start.RAM","episode.end.RAM","ATC.RAM"))
+## RAM Prevalence
 # Remove duplicates
-RAM_episodes<-unique(RAM_episodes, by = c("person_id", "episode.start.RAM", "episode.end.RAM"))
+RAM_prevalence_data<-unique(RAM_prevalence_data, by = c("person_id", "episode.start", "episode.end", "ATC"))
+# Change date format
+RAM_prevalence_data[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
+# Drop columns you dont need
+RAM_prevalence_data<-RAM_prevalence_data[,c("person_id", "episode.start", "episode.end", "ATC", "birth_date", "entry_date", "exit_date")]
+# Rename columns
+setnames(RAM_prevalence_data, old = c("episode.start","episode.end","ATC"), new = c("episode.start.RAM","episode.end.RAM","ATC.RAM"))
+
 
 ## Retinoid Treatment Episodes
-retinoid_episodes<-retinoid_episodes[,-c("episode.duration", "episode.ID")]
-# Change date format
-retinoid_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)]
-# Rename columns
-setnames(retinoid_episodes, old = c("episode.start","episode.end","ATC", "end.episode.gap.days"), new = c("episode.start.retinoid","episode.end.retinoid","ATC.retinoid", "end.episode.gap.days.retinoid"))
 # Remove duplicates
-retinoid_episodes<-unique(retinoid_episodes, by = c("person_id", "episode.start.retinoid", "episode.end.retinoid"))
+retinoid_prevalence_data<-unique(retinoid_prevalence_data, by = c("person_id", "episode.start", "episode.end", "ATC"))
+# Change date format
+retinoid_prevalence_data[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)]
+# Drop columns you dont need
+retinoid_prevalence_data<-retinoid_prevalence_data[,c("person_id", "episode.start", "episode.end", "ATC", "end.episode.gap.days")]
+# Rename columns
+setnames(retinoid_prevalence_data, old = c("episode.start","episode.end","ATC", "end.episode.gap.days"), new = c("episode.start.retinoid","episode.end.retinoid","ATC.retinoid", "end.episode.gap.days.retinoid"))
 # Create column next.episode.start.retinoid
-retinoid_episodes<-retinoid_episodes[order(person_id, ATC.retinoid, episode.start.retinoid)]
-retinoid_episodes[, next.episode.start.retinoid:= shift(episode.start.retinoid, type = "lead" ), by = c("person_id", "ATC.retinoid")]
+retinoid_prevalence_data<-retinoid_prevalence_data[order(person_id, ATC.retinoid, episode.start.retinoid)]
+retinoid_prevalence_data[, next.episode.start.retinoid:= shift(episode.start.retinoid, type = "lead" ), by = c("person_id", "ATC.retinoid")]
 ## Denominators 
 ## Retinoid Prevalent Counts
 retinoid_prevalence_counts<-retinoid_prevalence_counts[,c("YM", "N")]   
@@ -61,19 +61,9 @@ retinoid_prevalence_counts<-retinoid_prevalence_counts[,c("YM", "N")]
 setnames(retinoid_prevalence_counts,"N", "Freq")
 
 ### Merge Retinoid and RAM to compare treatment periods 
-RAM_retinoid_use<-merge(RAM_episodes, retinoid_episodes, by="person_id")
-# Merges with study population to get birth_date, entry and exit dates
-RAM_retinoid_use<-merge(RAM_retinoid_use, retinoid_study_population[,c("person_id", "birth_date", "entry_date","exit_date")], by = "person_id")
+RAM_retinoid_use<-merge(RAM_prevalence_data, retinoid_prevalence_data, by="person_id", allow.cartesian = TRUE)
 # Filter out dates that fall outside entry and exit dates
 RAM_retinoid_use<-RAM_retinoid_use[episode.start.RAM>=entry_date & episode.start.RAM<=exit_date,]
-
-#### TESTING CODE ####
-RAM_retinoid_use[person_id=="ConCDM_SIM_200421_00925" & episode.start.RAM=="2011-12-02", episode.start.retinoid:=as.IDate("2011-10-02")]
-RAM_retinoid_use[person_id=="ConCDM_SIM_200421_00925" & episode.start.RAM=="2011-12-02", episode.end.retinoid:=as.IDate("2012-02-10")]
-RAM_retinoid_use[person_id=="ConCDM_SIM_200421_00925" & episode.start.RAM=="2011-12-02", episode.end.altmed:=as.IDate("2012-01-01")]
-RAM_retinoid_use[person_id=="ConCDM_SIM_200421_00925" & episode.start.retinoid=="2019-02-01", episode.start.RAM:=as.IDate("2019-03-15")]
-RAM_retinoid_use[person_id=="ConCDM_SIM_200421_00925" & episode.start.retinoid=="2019-02-01", episode.end.altmed:=as.IDate("2019-06-20")]
-
 
 ###  Concomitance Conditions 
 # RAM episode
@@ -83,8 +73,8 @@ RAM_retinoid_use[person_id=="ConCDM_SIM_200421_00925" & episode.start.retinoid==
 # Scenario 3: RAM episode start begins begins before Retinoid episode start and RAM episode ends after next Retinoid episode start
 
 # Get the concomitant users 
-RAM_retinoid_use[,concomit:= ifelse(episode.start.RAM>episode.start.retinoid & episode.start.RAM<episode.end.retinoid & !is.na(next.episode.start.retinoid) & episode.end.altmed>next.episode.start.retinoid & end.episode.gap.days.retinoid<=discontinuation_window, 1,
-                               ifelse(episode.start.RAM>=episode.start.retinoid & episode.end.altmed<=episode.end.retinoid,1,
+RAM_retinoid_use[,concomit:= ifelse(episode.start.RAM>episode.start.retinoid & episode.start.RAM<episode.end.retinoid & !is.na(next.episode.start.retinoid) & episode.end.RAM>next.episode.start.retinoid & end.episode.gap.days.retinoid<=discontinuation_window, 1,
+                               ifelse(episode.start.RAM>=episode.start.retinoid & episode.end.RAM<=episode.end.retinoid,1,
                                       ifelse(episode.start.RAM>episode.start.retinoid & episode.end.retinoid-episode.start.RAM>=30,1,0)))]
 # Keep only concomitant users
 RAM_concomit<- RAM_retinoid_use[concomit==1,]
@@ -98,12 +88,18 @@ if(nrow(RAM_concomit)>0){
   RAM_concomit[current_age >= 21 & current_age < 31, age_group:= "21-30.99"]
   RAM_concomit[current_age >= 31 & current_age < 41, age_group:= "31-40.99"]
   RAM_concomit[current_age >= 41 & current_age < 56, age_group:= "41-55.99"]
-  # Removes all episode ends that fall outside entry_date and exit_date
-  RAM_concomit<-RAM_concomit[episode.start.RAM>entry_date & episode.start.RAM<=exit_date,]
-  ### General Concomitance ###
   # Creates year and month columns
   RAM_concomit[,year:=year(episode.start.RAM)][,month:=month(episode.start.RAM)]
-  # Switching Counts 
+  # Removes all episode ends that fall outside entry_date and exit_date
+  RAM_concomit<-RAM_concomit[episode.start.RAM>entry_date & episode.start.RAM<=exit_date,]
+  # column cleanup
+  RAM_concomit<-RAM_concomit[,-c("end.episode.gap.days.retinoid","next.episode.start.retinoid","concomit")]
+  # rearrange columns
+  setcolorder(RAM_concomit, c("person_id", "episode.start.RAM","episode.end.RAM","ATC.RAM","episode.start.retinoid","episode.end.retinoid","ATC.retinoid","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
+  # Remove duplicates -> should be one per person id, ATC, episode start
+  RAM_concomit<-unique(RAM_concomit, by=c("person_id", "episode.start.RAM", "ATC.RAM"))
+  ### General Concomitance ###
+  # Concomitant Counts 
   RAM_concomit_counts<-RAM_concomit[,.N, by = .(year,month)]
   # Adjust for PHARMO
   if(is_PHARMO){RAM_concomit_counts<-RAM_concomit_counts[year < 2020,]} else {RAM_concomit_counts<-RAM_concomit_counts[year < 2021,]}

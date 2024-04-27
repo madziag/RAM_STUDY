@@ -56,8 +56,7 @@ RAM_episodes_expanded[current_age >= 11 & current_age < 21, age_group:= "12-20.9
 RAM_episodes_expanded[current_age >= 21 & current_age < 31, age_group:= "21-30.99"]
 RAM_episodes_expanded[current_age >= 31 & current_age < 41, age_group:= "31-40.99"]
 RAM_episodes_expanded[current_age >= 41 & current_age < 56, age_group:= "41-55.99"]
-# Removes unnecessary columns
-RAM_episodes_expanded<-RAM_episodes_expanded[,-c("birth_date", "idnum", "episode.ID")]
+
 
 ### Numerator = Number of female subjects in cohort with valproate/retinoid episode overlapping the month by at least 1 day 
 # Removes duplicates - keeps only the earliest record of person_id, year, month => we get the first record of person for every month in every year
@@ -65,6 +64,12 @@ RAM_episodes_expanded<-RAM_episodes_expanded[,-c("birth_date", "idnum", "episode
 RAM_prevalence<-RAM_episodes_expanded[!duplicated(RAM_episodes_expanded[,c("person_id", "episode.start", "year", "month")])]
 # Removes any records where episode.day falls outside of entry & exit dates
 RAM_prevalence<-RAM_prevalence[episode.day>=entry_date & episode.day<=exit_date,]
+# Removes unnecessary columns
+RAM_prevalence<-RAM_prevalence[,-c("rowID","idnum","episode.day")]
+# Reorder columns
+setcolorder(RAM_prevalence, c("person_id", "episode.ID" , "episode.start","end.episode.gap.days","episode.duration","episode.end","ATC","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
+                            
+
 # Prevalence Counts
 RAM_prevalence_counts<-RAM_prevalence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -151,10 +156,12 @@ RAM_incidence<-RAM_incidence[, previous.episode.end:= shift(episode.end, type = 
 RAM_incidence<-RAM_incidence[, incident_user:=ifelse(episode.ID==1 | (!is.na(previous.episode.end) & episode.start-previous.episode.end>365), 1, 0)]
 # Create a subset of only the incident users 
 RAM_incidence<-RAM_incidence[incident_user==1,]
-# If episode start falls outside of patients entry and exit into study dates, then remove it
-RAM_incidence<-RAM_incidence[episode.start>= entry_date & episode.start<=exit_date,]
 # Creates year and month columns
 RAM_incidence[,year:=year(episode.start)][,month:=month(episode.start)]
+# If episode start falls outside of patients entry and exit into study dates, then remove it
+RAM_incidence<-RAM_incidence[episode.start>= entry_date & episode.start<=exit_date,]
+# Removes unnecessary columns
+RAM_incidence<-RAM_incidence[,-c("rowID", "previous.episode.end", "incident_user")]
 # Incidence Counts
 RAM_incidence_counts<-RAM_incidence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -242,10 +249,12 @@ RAM_discontinued<-RAM_discontinued[is.na(next.episode.start), discontinued := 1]
 RAM_discontinued<-RAM_discontinued[!is.na(next.episode.start), discontinued := ifelse(next.episode.start-episode.end > discontinuation_window, 1, 0)]
 # Get only rows where the value of discontinued == 1 (true discontinue-rs)
 RAM_discontinued<-RAM_discontinued[discontinued == 1,]
-# Removes all episode ends that fall outside entry_date and exit_date
-RAM_discontinued<-RAM_discontinued[episode.end>entry_date & episode.end<=exit_date,]
 # Creates year and month columns
 RAM_discontinued[,year:=year(episode.end)][,month:=month(episode.end)]
+# Removes all episode ends that fall outside entry_date and exit_date
+RAM_discontinued<-RAM_discontinued[episode.end>entry_date & episode.end<=exit_date,]
+# Removes unnecessary columns
+RAM_discontinued<-RAM_discontinued[,-c("rowID", "next.episode.start", "discontinued")]
 # Performs discontinued counts 
 RAM_discontinued_counts<-RAM_discontinued[,.N, by = .(year,month)]
 # Adjust for PHARMO

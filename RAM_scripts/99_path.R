@@ -125,3 +125,13 @@ objective3_dir<-paste0(medicines_counts_dir,"/RAM_Objective_3")
 # To save concomitance patient level records  
 invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")),FALSE))
 objective3_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")
+
+# To save concomitance patient level records  
+invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"RAM_Objective_4")),dir.create(paste0(counts_dfs_dir,"RAM_Objective_4")),FALSE))
+objective4_temp_dir<-paste0(counts_dfs_dir,"RAM_Objective_4/")
+# To save concomitance patient level records  
+invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_4")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_4")),FALSE))
+objective4_dir<-paste0(medicines_counts_dir,"/RAM_Objective_4")
+# To save concomitance patient level records  
+invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")),FALSE))
+objective4_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")
