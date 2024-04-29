@@ -1,7 +1,7 @@
-# Author: Magdalena Gamba M.D.
-# email: m.a.gamba@uu.nl
-# Organisation: Utrecht University, Utrecht, The Netherlands
-# Date: 31/01/2022
+#Author: Magdalena Gamba 
+#email: m.a.gamba@uu.nl
+#Organisation: Utrecht University, Utrecht, The Netherlands
+#Date: 29/04/2024
 
 # Takes into account user_input multiple_regions = T/F
 # If multiple_regions = T, for each region with records in CDMInstances folder 

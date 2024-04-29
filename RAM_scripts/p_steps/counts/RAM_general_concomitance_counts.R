@@ -79,6 +79,7 @@ RAM_retinoid_use[,concomit:= ifelse(episode.start.RAM>episode.start.retinoid & e
 # Keep only concomitant users
 RAM_concomit<- RAM_retinoid_use[concomit==1,]
 
+# Concomitant counts 
 if(nrow(RAM_concomit)>0){
   
   # Create column with patients age at episode.start
@@ -96,11 +97,14 @@ if(nrow(RAM_concomit)>0){
   RAM_concomit<-RAM_concomit[,-c("end.episode.gap.days.retinoid","next.episode.start.retinoid","concomit")]
   # rearrange columns
   setcolorder(RAM_concomit, c("person_id", "episode.start.RAM","episode.end.RAM","ATC.RAM","episode.start.retinoid","episode.end.retinoid","ATC.retinoid","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
-  # Remove duplicates -> should be one per person id, ATC, episode start
-  RAM_concomit<-unique(RAM_concomit, by=c("person_id", "episode.start.RAM", "ATC.RAM"))
+  # For flow chart
+  RAM_flowchart_concomit_records<-nrow(RAM_concomit)
   ### General Concomitance ###
+  # Get 1 per person id per ATC per month-year
+  RAM_concomit_user<- unique(RAM_concomit, by=c("person_id", "year", "month", "ATC.RAM"))
+  RAM_flowchart_concomit_users<-length(unique(RAM_concomit$person_id))
   # Concomitant Counts 
-  RAM_concomit_counts<-RAM_concomit[,.N, by = .(year,month)]
+  RAM_concomit_counts<-RAM_concomit_user[,.N, by = .(year,month)]
   # Adjust for PHARMO
   if(is_PHARMO){RAM_concomit_counts<-RAM_concomit_counts[year < 2020,]} else {RAM_concomit_counts<-RAM_concomit_counts[year < 2021,]}
   # Merge with empty df (for counts that do not have counts for all months and years of study)
@@ -149,8 +153,7 @@ if(nrow(RAM_concomit)>0){
     # Calculates rates
     age_group_concomit_count<-age_group_concomit_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
     # Adjust for PHARMO
-    # if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-    each_group<-each_group[year<2021,]
+    if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
     # Drop columns you don't need 
     age_group_concomit_count<-age_group_concomit_count[,c("YM","N","Freq","rates","masked")]
     
@@ -162,8 +165,19 @@ if(nrow(RAM_concomit)>0){
   print("There was no concomitant use of RAM and Retinoids")
 }
 
+# Get Unrelated 
+# treatment initiation of a RAM ≥90 days after the oral retinoid end date
+RAM_retinoid_use[,unrelated:=ifelse(episode.start.RAM-episode.end.retinoid>=90 | episode.start.RAM-episode.end.retinoid<= -90, 1, 0)]
+
+# Keep only unrelated 
+RAM_unrelated <- RAM_retinoid_use[unrelated==1,]   
+# Get unique users
+RAM_unrelated<-unique(RAM_unrelated, by=c("person_id", "episode.start.RAM", "ATC.RAM"))
+# Flowchart
+RAM_flowchart_unrelated<-nrow(RAM_unrelated) 
+
 # Clean up 
-# rm(list = grep("^age_group|df_episode|^altmed|^df_|^each_group|^incidence|^prevalence|study_pop_meds", ls(), value = TRUE))
+rm(list = grep("^age_group|concomit_by|concomit_count|each_group|RAM_concomit|RAM_prev|RAM_ret|RAM_unre|retinoid_prev", ls(), value = TRUE))
 
 
 

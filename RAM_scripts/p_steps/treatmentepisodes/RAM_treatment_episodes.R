@@ -103,4 +103,4 @@ if(length(RAM_episode_files)>0){
 
 
 # Clean up 
-rm(list= grep("^cma|^split|^treat|RAM_meds_all", ls(), value = TRUE))
+rm(list= grep("^cma|^split|^treat|RAM_meds_all|RAM_episodes|RAM_meds_", ls(), value = TRUE))

@@ -195,5 +195,5 @@ saveRDS(retinoid_discontinued_rates, paste0(medicines_counts_dir, "/", pop_prefi
 saveRDS(retinoid_discontinued, paste0(retinoid_counts_dfs, pop_prefix, "_Retinoid_discontinued_data.rds"))
 
 # Clean up 
-rm(list = grep("^retinoid_discont|^retinoid_inc|^retinoid_prev|^retinoid_episodes_", ls(), value = TRUE))
+rm(list = grep("^retinoid_discont|^retinoid_inc|^retinoid_prev|^retinoid_episodes_|retinoid_episodes", ls(), value = TRUE))
 

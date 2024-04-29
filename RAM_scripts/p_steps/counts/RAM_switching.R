@@ -91,6 +91,10 @@ if(nrow(RAM_switcher)>0){
   RAM_switcher<-RAM_switcher[,-c("switcher")]
   # rearrange columns
   setcolorder(RAM_switcher, c("person_id", "episode.start.RAM","episode.end.RAM","ATC.RAM","episode.start.retinoid","episode.end.retinoid","ATC.retinoid","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
+  # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
+  RAM_switcher<-unique(RAM_switcher, by=c("person_id", "year", "month", "ATC.RAM"))
+  # For flow chart
+  RAM_flowchart_switcher<-length(unique(RAM_switcher$person_id))
   
   ### Switcher Version 1: Denominator => Retinoid Prevalence ###
 
@@ -155,8 +159,7 @@ if(nrow(RAM_switcher)>0){
     # Calculates rates
     age_group_switcher_count<-age_group_switcher_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
     # Adjust for PHARMO
-    # if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-    each_group<-each_group[year<2021,]
+    if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
     # Drop columns you don't need 
     age_group_switcher_count<-age_group_switcher_count[,c("YM","N","Freq","rates","masked")]
     
@@ -169,7 +172,7 @@ if(nrow(RAM_switcher)>0){
 }
 
 # Clean up 
-rm(list = grep("^age_group|each_group|RAM_episodes|RAM_episodes|retinoid_d|RAM_switch|RAM_ret|RAM_incidence|RAM_meds_in|switcher_by_age|switcher_count_min", ls(), value = TRUE))
+rm(list = grep("^age_group|each_group|RAM_episodes|RAM_episodes|retinoid_d|RAM_switch|RAM_ret|RAM_incidence|RAM_meds_in|switcher_by_age|switcher_count_min|retinoid_prevalence_counts", ls(), value = TRUE))
 
 
 

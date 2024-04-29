@@ -101,7 +101,7 @@ if(length(retinoid_episode_files)>0){
 }
 
 # Clean up 
-rm(list= grep("^actual|^cma|^split|^treat", ls(), value = TRUE))
+rm(list= grep("^actual|^cma|^split|^treat|retinoid_episode|retinoid_meds", ls(), value = TRUE))
 
 
 

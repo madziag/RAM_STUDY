@@ -1,3 +1,8 @@
+#Author: Magdalena Gamba M.D.
+#email: m.a.gamba@uu.nl
+#Organisation: Utrecht University, Utrecht, The Netherlands
+#Date: 10/12/2021
+
 # Same code as in denominator_monthly_WOCBP only here it is run on the subset of that population (retinoid users)
 
 # Create a subset of study population who has ever used Retinoids 

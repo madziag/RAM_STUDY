@@ -1,17 +1,22 @@
+#Author: Magdalena Gamba 
+#email: m.a.gamba@uu.nl
+#Organisation: Utrecht University, Utrecht, The Netherlands
+#Date: 29/04/2024
+
 #############################################################################################
 #############################################################################################
 ############# Incidence, Prevalence, Discontinuation ########################################
 #############################################################################################
 #############################################################################################
 
-##### Monthly incidence rates (IR) of RAM #####
-# Numerator = number of new RAM users (no use the year prior) per calendar month (at least one day of exposure that month)
-# denominator= number of WOCBP who ever used a retinoid at risk that month. 
-# Unit = person-month. 
-
 ##### Monthly prevalence rates (PR) of RAM #####
 # Numerator = number of RAM users per calendar month (with at least one day of exposure that month)
-# denominator= number of WOCBP who ever used a retinoid of such calendar month 
+# denominator= subset of WOCBP with at least one retinoid prescription within study period (retinoid prescription has to fall between entry and exit study dates)
+# Unit = person-month. 
+
+##### Monthly incidence rates (IR) of RAM #####
+# Numerator = number of new RAM users (no use the year prior) per calendar month (at least one day of exposure that month)
+# denominator= subset of WOCBP with at least one retinoid prescription within study period (retinoid prescription has to fall between entry and exit study dates)
 # Unit = person-month. 
 
 ##### Monthly discontinuation rates (IR) of RAM #####
@@ -58,7 +63,7 @@ RAM_episodes_expanded[current_age >= 31 & current_age < 41, age_group:= "31-40.9
 RAM_episodes_expanded[current_age >= 41 & current_age < 56, age_group:= "41-55.99"]
 
 
-### Numerator = Number of female subjects in cohort with valproate/retinoid episode overlapping the month by at least 1 day 
+### Numerator = Number of female subjects in cohort with RAM episode overlapping the month by at least 1 day 
 # Removes duplicates - keeps only the earliest record of person_id, year, month => we get the first record of person for every month in every year
 # Creates data where each row represents a month of treatment within the treatment episode (patient is represented once per month)
 RAM_prevalence<-RAM_episodes_expanded[!duplicated(RAM_episodes_expanded[,c("person_id", "episode.start", "year", "month")])]
@@ -68,8 +73,10 @@ RAM_prevalence<-RAM_prevalence[episode.day>=entry_date & episode.day<=exit_date,
 RAM_prevalence<-RAM_prevalence[,-c("rowID","idnum","episode.day")]
 # Reorder columns
 setcolorder(RAM_prevalence, c("person_id", "episode.ID" , "episode.start","end.episode.gap.days","episode.duration","episode.end","ATC","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
-                            
-
+# Remove duplicates -> 1 per person_id, 
+RAM_prevalence<-unique(RAM_prevalence, by=c("person_id", "year", "month", "ATC"))                        
+# For flow chart
+RAM_flowchart_prevalence<-length(unique(RAM_prevalence$person_id))
 # Prevalence Counts
 RAM_prevalence_counts<-RAM_prevalence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -121,8 +128,7 @@ for(group in 1:length(unique(prevalence_by_age$age_group))){
   # Calculates rates
   age_group_prevalence_count<-age_group_prevalence_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
   # Adjust for PHARMO
-  # if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-  each_group<-each_group[year<2021,]
+  if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
   # Drop columns you don't need 
   age_group_prevalence_count<-age_group_prevalence_count[,c("YM","N","Freq","rates","masked")]
   
@@ -162,6 +168,10 @@ RAM_incidence[,year:=year(episode.start)][,month:=month(episode.start)]
 RAM_incidence<-RAM_incidence[episode.start>= entry_date & episode.start<=exit_date,]
 # Removes unnecessary columns
 RAM_incidence<-RAM_incidence[,-c("rowID", "previous.episode.end", "incident_user")]
+# Remove duplicates -> Patient is counted only 1x per month-year -ATC?
+RAM_incidence<-unique(RAM_incidence, by=c("person_id", "year", "month", "ATC"))
+# For flow chart
+RAM_flowchart_incidence<-length(unique(RAM_incidence$person_id))
 # Incidence Counts
 RAM_incidence_counts<-RAM_incidence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -212,8 +222,7 @@ for(group in 1:length(unique(incidence_by_age$age_group))){
   # Calculates rates
   age_group_incidence_count<-age_group_incidence_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
   # Adjust for PHARMO
-  # if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-  each_group<-each_group[year<2021,]
+  if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
   # Drop columns you don't need 
   age_group_incidence_count<-age_group_incidence_count[,c("YM","N","Freq","rates","masked")]
   
@@ -255,6 +264,11 @@ RAM_discontinued[,year:=year(episode.end)][,month:=month(episode.end)]
 RAM_discontinued<-RAM_discontinued[episode.end>entry_date & episode.end<=exit_date,]
 # Removes unnecessary columns
 RAM_discontinued<-RAM_discontinued[,-c("rowID", "next.episode.start", "discontinued")]
+# Remove duplicates -> Patient is counted only 1x per month-year -ATC?
+RAM_discontinued<-unique(RAM_discontinued, by=c("person_id", "year", "month", "ATC"))
+# For flow chart
+RAM_flowchart_discontinued<-length(unique(RAM_discontinued$person_id))
+
 # Performs discontinued counts 
 RAM_discontinued_counts<-RAM_discontinued[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -311,8 +325,7 @@ for(group in 1:length(unique(discontinued_by_age$age_group))){
   # Calculates rates
   age_group_discontinued_count<-age_group_discontinued_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
   # Adjust for PHARMO
-  # if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-  each_group<-each_group[year<2021,]
+  if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
   # Drop columns you don't need 
   age_group_discontinued_count<-age_group_discontinued_count[,c("YM","N","Freq","rates","masked")]
   
@@ -322,7 +335,7 @@ for(group in 1:length(unique(discontinued_by_age$age_group))){
 
   
 # Clean up 
-rm(list = grep("^age_group|^RAM_discont|^RAM_inc|^RAM_prev|^incidence_|^prevalence_|^discontinued_|each_group", ls(), value = TRUE))
+rm(list = grep("^age_group|^RAM_discont|^RAM_inc|^RAM_prev|^incidence_|^prevalence_|^discontinued_|each_group|RAM_episodes", ls(), value = TRUE))
 
 
 
