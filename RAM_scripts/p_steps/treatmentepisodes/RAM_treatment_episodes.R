@@ -1,14 +1,14 @@
-# #Author: Ema Alsina MSc.
-# #email: e.m.alsina-2@umcutrecht.nl
-# #Organisation: UMC Utrecht, Utrecht, The Netherlands
-# #Date: 18/12/2021
-# 
-# # This script does two things:
-# # 1. it loads RAM created by running "to_run_source_pop_counts.R", for separate subpopulations and regions if necessary.
-# # It finds which RAM's where used by Retinoid users (study population is Retinoid users of WOCBP)
-# # It then applys createDOT or a fixed duration value to create an estimated end date of treatment for every record
-# # 2. It creates a new data frame where each row is not a record, but instead a treatment episode.
-# 
+#Author: Magdalena Gamba M.D.
+#email: m.a.gamba@uu.nl
+#Organisation: Utrecht University, Utrecht, The Netherlands
+#Date: 29/04/2024
+
+# This script does two things:
+# 1. it loads RAM created by running "to_run_source_pop_counts.R", for separate subpopulations and regions if necessary.
+# It finds which RAM's where used by Retinoid users (study population is Retinoid users of WOCBP)
+# It then applys createDOT or a fixed duration value to create an estimated end date of treatment for every record
+# 2. It creates a new data frame where each row is not a record, but instead a treatment episode.
+
 
 # Get RAM records for retinoid user population 
 # Looks for RAM files in medications folder 

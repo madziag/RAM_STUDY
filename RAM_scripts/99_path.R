@@ -12,7 +12,7 @@ setwd(projectFolder)
 setwd('..') #in ConcePTION
 dir_base<-getwd()
 # set the name of the study
-StudyName<-"LOT4"
+StudyName<-"LOT4" #name of folder 
 path_dir<-paste0(dir_base,"/CDMInstances/",StudyName,"/")
 # path_dir<-paste0(dir_base,"/CDMInstances_preselect/") # use this option if you want to use the preselection files
 # path<-path_dir

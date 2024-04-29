@@ -44,7 +44,7 @@ for(pop in 1:length(populations)){
     # Counts concomitance: teratogenic 
     source(paste0(pre_dir, "counts/RAM_teratogenic.R"))
     # flow chart 
-    source(paste0(pre_dir, "RAM_counts_flowchart.R"))
+    source(paste0(pre_dir, "flowchart.R"))
     # # Creates baseline tables #
     # # source(paste0(pre_dir,"7_FinalCounts/create_baseline_tables.R"))
 
