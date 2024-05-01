@@ -16,9 +16,10 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   RAM_concomitance_data_per_user<-unique(RAM_concomitance_data, by=c("person_id", "year", "month"))
   RAM_concomitance_data_per_user_contraindicated<-unique(RAM_concomitance_data_contraindicated, by=c("person_id", "year", "month"))
   
-  # Flowchart
-  RAM_flowchart_concomit_users<-length(unique(RAM_concomitance_data_per_user$person_id))
-  RAM_flowchart_concomit_users_contraindicated<-length(unique(RAM_concomitance_data_per_user_contraindicated$person_id))
+  #flowchart
+  if(length(unique(RAM_concomitance_data_per_user$person_id))){RAM_flowchart_concomit_users<-length(unique(RAM_concomitance_data_per_user$person_id))}else{RAM_flowchart_concomit_users<-0}
+  if(length(unique(RAM_concomitance_data_per_user_contraindicated$person_id))){RAM_flowchart_concomit_users_contraindicated<-length(unique(RAM_concomitance_data_per_user_contraindicated$person_id))}else{RAM_flowchart_concomit_users_contraindicated<-0}
+  
   
   # Total concomitance counts per user (for all concomitant users and for concomitant users in contraindicated ATCs)
   RAM_concomitance_data_per_user_counts<-RAM_concomitance_data_per_user[,.N, by = .(year,month)]
@@ -78,8 +79,16 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   RAM_concomitance_data_per_record_contraindicated<-RAM_concomitance_data_contraindicated[,.N, by = .(year,month)]
   
   # Adjust for PHARMO
-  if(is_PHARMO){RAM_concomitance_data_per_record_counts<-RAM_concomitance_data_per_record_counts[year < 2020,]} else {RAM_concomitance_data_per_record_counts<-RAM_concomitance_data_per_record_counts[year < 2021,]}
-  if(is_PHARMO){RAM_concomitance_data_per_record_contraindicated<-RAM_concomitance_data_per_record_contraindicated[year < 2020,]} else {RAM_concomitance_data_per_record_contraindicated<-RAM_concomitance_data_per_user_RAM_concomitance_data_per_record_contraindicatedcontraindicated[year < 2021,]}
+  if(is_PHARMO){
+    RAM_concomitance_data_per_record_counts<-RAM_concomitance_data_per_record_counts[year < 2020,]
+  }else{
+      RAM_concomitance_data_per_record_counts<-RAM_concomitance_data_per_record_counts[year < 2021,]
+  }
+  if(is_PHARMO){
+    RAM_concomitance_data_per_record_contraindicated<-RAM_concomitance_data_per_record_contraindicated[year<2020,]
+    }else{
+    RAM_concomitance_data_per_record_contraindicated<-RAM_concomitance_data_per_record_contraindicated[year<2021,]
+    }
   
   # Merge with empty df (for counts that do not have counts for all months and years of study)
   RAM_concomitance_data_per_record_counts<-as.data.table(merge(x = empty_df, y = RAM_concomitance_data_per_record_counts, by = c("year", "month"), all.x = TRUE))
@@ -118,7 +127,10 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
 } else {
   
   print("There are no records for retinoid-RAM concomitance")
-  
+  RAM_flowchart_concomit_users<-0
+  RAM_flowchart_concomit_users_contraindicated<-0
+  RAM_flowchart_concomit_records<-0
+  RAM_flowchart_concomit_records_contraindicated<-0
 }
 
 # Clean up 

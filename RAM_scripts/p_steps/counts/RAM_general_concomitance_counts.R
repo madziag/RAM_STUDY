@@ -102,10 +102,8 @@ if(nrow(RAM_concomit)>0){
   ### General Concomitance ###
   # Get 1 per person id per month-year
   RAM_concomit_user<- unique(RAM_concomit, by=c("person_id", "year", "month"))
-  # For flowchart 
-  RAM_flowchart_concomit_users<-length(unique(RAM_concomit_user$person_id))
-  # For flow chart
-  RAM_flowchart_concomit_records<-nrow(RAM_concomit)
+  #flowchart 
+  if(length(unique(RAM_concomit_user$person_id))>0){RAM_flowchart_concomit_users<-length(unique(RAM_concomit_user$person_id))}else{RAM_flowchart_concomit_users<-0}
   # Concomitant Counts 
   RAM_concomit_counts<-RAM_concomit_user[,.N, by = .(year,month)]
   # Adjust for PHARMO
@@ -202,14 +200,14 @@ if(nrow(RAM_concomit)>0){
   RAM_concomit_all_ind<-rbindlist(list(RAM_concomit_per_indication_psoriasis,RAM_concomit_per_indication_acne,RAM_concomit_per_indication_dermatitis))
   # To be counted once per person, Year-month, indication
   RAM_concomit_all_ind<-unique(RAM_concomit_all_ind,by=c("person_id", "year", "month","indication"))
-  # flowchart
-  RAM_flowchart_concomit_psoriasis<-length(unique(RAM_concomit_per_indication_psoriasis$person_id))
-  RAM_flowchart_concomit_acne<-length(unique(RAM_concomit_per_indication_acne$person_id))
-  RAM_flowchart_concomit_dermatitis<-length(unique(RAM_concomit_per_indication_dermatitis$person_id))
-  
+  #flowchart
+  if(length(unique(RAM_concomit_per_indication_psoriasis$person_id))){RAM_flowchart_concomit_psoriasis<-length(unique(RAM_concomit_per_indication_psoriasis$person_id))}else{RAM_flowchart_concomit_psoriasis<-0}
+  if(length(unique(RAM_concomit_per_indication_acne$person_id))){RAM_flowchart_concomit_acne<-length(unique(RAM_concomit_per_indication_acne$person_id))}else{RAM_flowchart_concomit_acne<-0}
+  if(length(unique(RAM_concomit_per_indication_dermatitis$person_id))){RAM_flowchart_concomit_dermatitis<-length(unique(RAM_concomit_per_indication_dermatitis$person_id))}else{RAM_flowchart_concomit_dermatitis<-0}
+  # cleanup
   rm(RAM_concomit_per_indication_psoriasis,RAM_concomit_per_indication_acne,RAM_concomit_per_indication_dermatitis)
   
-  # Count concomit by age, month, year
+  # Count concomitance by age, month, year
   concomit_by_indication<-RAM_concomit_all_ind[,.N, by = .(year,month, indication)]
   
   for(group in 1:length(unique(concomit_by_indication$indication))){
@@ -247,6 +245,10 @@ if(nrow(RAM_concomit)>0){
   
 } else {
   print("There was no concomitant use of RAM and Retinoids")
+  RAM_flowchart_concomit<-0
+  RAM_flowchart_concomit_psoriasis<-0
+  RAM_flowchart_concomit_acne<-0
+  RAM_flowchart_concomit_dermatitis<-0
 }
 
 
@@ -267,8 +269,8 @@ RAM_unrelated_users<-unique(RAM_unrelated, by=c("person_id"))
 # Get unique records
 RAM_unrelated_records<-unique(RAM_unrelated)
 # Flowchart
-RAM_flowchart_unrelated_users<-nrow(RAM_unrelated_users)
-RAM_flowchart_unrelated_records<-nrow(RAM_unrelated_records) 
+if(nrow(RAM_unrelated_users)>0){RAM_flowchart_unrelated_users<-nrow(RAM_unrelated_users)}else{RAM_flowchart_unrelated_users<-0}
+if(nrow(RAM_unrelated_records)>0){RAM_flowchart_unrelated_records<-nrow(RAM_unrelated_records)}else{RAM_flowchart_unrelated_records<-0}
 # Clean up 
 rm(list = grep("^age_group|concomit_by|concomit_count|each_group|RAM_concomit|RAM_prev|RAM_ret|RAM_unre|retinoid_prev", ls(), value = TRUE))
 

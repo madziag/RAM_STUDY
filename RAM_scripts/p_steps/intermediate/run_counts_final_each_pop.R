@@ -26,7 +26,7 @@ for(pop in 1:length(populations)){
   # Assign study population prefix name
   pop_prefix<-gsub("_retinoid_study_population.rds", "", populations[pop])
 
-  if(length(nrow(retinoid_study_population))>0){
+  if(nrow(retinoid_study_population)>0){
     # Creates Retinoid treatment episodes 
     source(paste0(pre_dir, "treatmentepisodes/retinoid_treatment_episodes.R"))
     # Creates RAM treatment episodes in Retinoid Users 
@@ -59,16 +59,16 @@ for(pop in 1:length(populations)){
 }
 
 
-### Creates csv/xslx folders inside main folders ###
-# Creates csv/xslx folder inside baseline tables, pregnancy counts and medicines counts folders
-invisible(ifelse(!dir.exists(paste0(baseline_tables_dir,"/",my_format,"_files")), dir.create(paste0(baseline_tables_dir,"/",my_format,"_files")), FALSE))
-baseline_tables_csv_xlsx <- paste0(baseline_tables_dir,"/",my_format,"_files")
-# Create folder inside medicines folder for csv or excel file format
-invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/",my_format,"_files")), dir.create(paste0(medicines_counts_dir,"/",my_format,"_files")), FALSE))
-medicines_counts_csv_xlsx <- paste0(medicines_counts_dir,"/",my_format,"_files")
-
-### Creates plot folders inside main folders
-# Create plots folder inside medicines counts folder
-invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/","plots")), dir.create(paste0(medicines_counts_dir,"/","plots")), FALSE))
-medicines_counts_plots <- paste0(medicines_counts_dir,"/","plots")
-
+# ### Creates csv/xslx folders inside main folders ###
+# # Creates csv/xslx folder inside baseline tables, pregnancy counts and medicines counts folders
+# invisible(ifelse(!dir.exists(paste0(baseline_tables_dir,"/",my_format,"_files")), dir.create(paste0(baseline_tables_dir,"/",my_format,"_files")), FALSE))
+# baseline_tables_csv_xlsx <- paste0(baseline_tables_dir,"/",my_format,"_files")
+# # Create folder inside medicines folder for csv or excel file format
+# invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/",my_format,"_files")), dir.create(paste0(medicines_counts_dir,"/",my_format,"_files")), FALSE))
+# medicines_counts_csv_xlsx <- paste0(medicines_counts_dir,"/",my_format,"_files")
+# 
+# ### Creates plot folders inside main folders
+# # Create plots folder inside medicines counts folder
+# invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/","plots")), dir.create(paste0(medicines_counts_dir,"/","plots")), FALSE))
+# medicines_counts_plots <- paste0(medicines_counts_dir,"/","plots")
+# 

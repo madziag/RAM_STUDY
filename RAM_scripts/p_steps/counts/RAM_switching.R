@@ -95,9 +95,8 @@ if(nrow(RAM_switcher)>0){
   RAM_switcher_per_indication<-RAM_switcher
   # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
   RAM_switcher<-unique(RAM_switcher, by=c("person_id", "year", "month"))
-  # For flow chart
-  RAM_flowchart_switcher<-length(unique(RAM_switcher$person_id))
-  
+  #flowchart
+  if(length(unique(RAM_switcher$person_id))>0){RAM_flowchart_switcher<-length(unique(RAM_switcher$person_id))}else{RAM_flowchart_switcher<-0}
   ### Switcher Version 1: Denominator => Retinoid Prevalence ###
 
   # Switching Counts 
@@ -205,11 +204,11 @@ if(nrow(RAM_switcher)>0){
   RAM_switcher_all_ind<-rbindlist(list(RAM_switcher_per_indication_psoriasis,RAM_switcher_per_indication_acne,RAM_switcher_per_indication_dermatitis))
   # To be counted once per person, Year-month, indication
   RAM_switcher_all_ind<-unique(RAM_switcher_all_ind,by=c("person_id", "year", "month","indication"))
-  # flowchart
-  RAM_flowchart_switcher_psoriasis<-length(unique(RAM_switcher_per_indication_psoriasis$person_id))
-  RAM_flowchart_switcher_acne<-length(unique(RAM_switcher_per_indication_acne$person_id))
-  RAM_flowchart_switcher_dermatitis<-length(unique(RAM_switcher_per_indication_dermatitis$person_id))
-  
+  #flowchart
+  if(length(unique(RAM_switcher_per_indication_psoriasis$person_id))>0){RAM_flowchart_switcher_psoriasis<-length(unique(RAM_switcher_per_indication_psoriasis$person_id))}else{RAM_flowchart_switcher_psoriasis<-0}
+  if(length(unique(RAM_switcher_per_indication_acne$person_id))>0){RAM_flowchart_switcher_acne<-length(unique(RAM_switcher_per_indication_acne$person_id))}else{RAM_flowchart_switcher_acne<-0}
+  if(length(unique(RAM_switcher_per_indication_dermatitis$person_id))>0){RAM_flowchart_switcher_dermatitis<-length(unique(RAM_switcher_per_indication_dermatitis$person_id))}else{RAM_flowchart_switcher_dermatitis<-0}
+  # cleanup
   rm(RAM_switcher_per_indication_psoriasis,RAM_switcher_per_indication_acne,RAM_switcher_per_indication_dermatitis)
   
   # Count switcher by age, month, year
@@ -249,6 +248,10 @@ if(nrow(RAM_switcher)>0){
   
 } else {
   print("There are no switchers from Retinoids to RAM")
+  RAM_flowchart_switcher<-0
+  RAM_flowchart_switcher_psoriasis<-0
+  RAM_flowchart_switcher_acne<-0
+  RAM_flowchart_switcher_dermatitis<-0
 }
 
 # Clean up 

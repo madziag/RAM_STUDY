@@ -73,11 +73,8 @@ RAM_prevalence<-RAM_prevalence[episode.day>=entry_date & episode.day<=exit_date,
 RAM_prevalence<-RAM_prevalence[,-c("rowID","idnum","episode.day")]
 # Reorder columns
 setcolorder(RAM_prevalence, c("person_id", "episode.ID" , "episode.start","end.episode.gap.days","episode.duration","episode.end","ATC","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
-
-## FOR FLOWCHART ##
-RAM_flowchart_prevalence<-length(unique(RAM_prevalence$person_id))
-## FOR FLOWCHART ##
-
+#flowchart
+if(length(unique(RAM_prevalence$person_id))>0){RAM_flowchart_prevalence<-length(unique(RAM_prevalence$person_id))}else{RAM_flowchart_prevalence<-0}
 # Prevalence Counts
 RAM_prevalence_counts<-RAM_prevalence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -176,11 +173,11 @@ RAM_prevalence_per_indication_dermatitis[,indication:="dermatitis"]
 RAM_prevalence_all_ind<-rbindlist(list(RAM_prevalence_per_indication_psoriasis,RAM_prevalence_per_indication_acne,RAM_prevalence_per_indication_dermatitis))
 # To be counted once per person, Year-month, indication
 RAM_prevalence_all_ind<-unique(RAM_prevalence_all_ind,by=c("person_id", "year", "month","indication"))
-# flowchart
-RAM_flowchart_prevalence_psoriasis<-length(unique(RAM_prevalence_per_indication_psoriasis$person_id))
-RAM_flowchart_prevalence_acne<-length(unique(RAM_prevalence_per_indication_acne$person_id))
-RAM_flowchart_prevalence_dermatitis<-length(unique(RAM_prevalence_per_indication_dermatitis$person_id))
-
+#flowchart
+if(length(unique(RAM_prevalence_per_indication_psoriasis$person_id))>0){RAM_flowchart_prevalence_psoriasis<-length(unique(RAM_prevalence_per_indication_psoriasis$person_id))}else{RAM_flowchart_prevalence_psoriasis<-0}
+if(length(unique(RAM_prevalence_per_indication_acne$person_id))>0){RAM_flowchart_prevalence_acne<-length(unique(RAM_prevalence_per_indication_acne$person_id))}else{RAM_flowchart_prevalence_acne<-0}
+if(length(unique(RAM_prevalence_per_indication_dermatitis$person_id))>0){RAM_flowchart_prevalence_dermatitis<-length(unique(RAM_prevalence_per_indication_dermatitis$person_id))}else{RAM_flowchart_prevalence_dermatitis<-0}
+#cleanup 
 rm(RAM_prevalence_per_indication_psoriasis,RAM_prevalence_per_indication_acne,RAM_prevalence_per_indication_dermatitis)
 
 # Count incidence by age, month, year
@@ -255,11 +252,11 @@ RAM_incidence<-RAM_incidence[,-c("rowID", "previous.episode.end", "incident_user
 RAM_incidence_per_indication<-RAM_incidence
 # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
 RAM_incidence<-unique(RAM_incidence, by=c("person_id", "year", "month"))
-## FOR FLOWCHART ##
-RAM_flowchart_incidence<-length(unique(RAM_incidence$person_id))
+#flowchart
+if(RAM_flowchart_incidence<-length(unique(RAM_incidence$person_id))>0){RAM_flowchart_incidence<-length(unique(RAM_incidence$person_id))}else{RAM_flowchart_incidence<-0}
 # Incidence Counts
 RAM_incidence_counts<-RAM_incidence[,.N, by = .(year,month)]
-## FOR FLOWCHART ##
+# Adjust for PHARMO
 if(is_PHARMO){RAM_incidence_counts<-RAM_incidence_counts[year < 2020,]} else {RAM_incidence_counts<-RAM_incidence_counts[year < 2021,]}
 # Merge with empty df (for counts that do not have counts for all months and years of study)
 RAM_incidence_counts<-as.data.table(merge(x = empty_df, y = RAM_incidence_counts, by = c("year", "month"), all.x = TRUE))
@@ -354,12 +351,11 @@ RAM_incidence_per_indication_dermatitis[,indication:="dermatitis"]
 RAM_incidence_all_ind<-rbindlist(list(RAM_incidence_per_indication_psoriasis,RAM_incidence_per_indication_acne,RAM_incidence_per_indication_dermatitis))
 # To be counted once per person, Year-month, indication
 RAM_incidence_all_ind<-unique(RAM_incidence_all_ind,by=c("person_id", "year", "month","indication"))
-
-# flowchart
-RAM_flowchart_incidence_psoriasis<-length(unique(RAM_incidence_per_indication_psoriasis$person_id))
-RAM_flowchart_incidence_acne<-length(unique(RAM_incidence_per_indication_acne$person_id))
-RAM_flowchart_incidence_dermatitis<-length(unique(RAM_incidence_per_indication_dermatitis$person_id))
-
+#flowchart
+if(length(unique(RAM_incidence_per_indication_psoriasis$person_id))>0){RAM_flowchart_incidence_psoriasis<-length(unique(RAM_incidence_per_indication_psoriasis$person_id))}else{RAM_flowchart_incidence_psoriasis<-0}
+if(length(unique(RAM_incidence_per_indication_acne$person_id))>0){RAM_flowchart_incidence_acne<-length(unique(RAM_incidence_per_indication_acne$person_id))}else{RAM_flowchart_incidence_acne<-0}
+if(length(unique(RAM_incidence_per_indication_dermatitis$person_id))>0){RAM_flowchart_incidence_dermatitis<-length(unique(RAM_incidence_per_indication_dermatitis$person_id))}else{RAM_flowchart_incidence_dermatitis<-0}
+# cleanup
 rm(RAM_incidence_per_indication_psoriasis,RAM_incidence_per_indication_acne,RAM_incidence_per_indication_dermatitis)
 
 # Count incidence by age, month, year
@@ -435,9 +431,8 @@ RAM_discontinued<-RAM_discontinued[,-c("rowID", "next.episode.start", "discontin
 RAM_discontinued_per_indication<-RAM_discontinued
 # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
 RAM_discontinued<-unique(RAM_discontinued, by=c("person_id", "year", "month"))
-# For flow chart
-RAM_flowchart_discontinued<-length(unique(RAM_discontinued$person_id))
-
+#flowchart
+if(length(unique(RAM_discontinued$person_id))){RAM_flowchart_discontinued<-length(unique(RAM_discontinued$person_id))}else{RAM_flowchart_discontinued<-0}
 # Performs discontinued counts 
 RAM_discontinued_counts<-RAM_discontinued[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -540,12 +535,11 @@ RAM_discontinued_per_indication_dermatitis[,indication:="dermatitis"]
 RAM_discontinued_all_ind<-rbindlist(list(RAM_discontinued_per_indication_psoriasis,RAM_discontinued_per_indication_acne,RAM_discontinued_per_indication_dermatitis))
 # To be counted once per person, Year-month, indication
 RAM_discontinued_all_ind<-unique(RAM_discontinued_all_ind,by=c("person_id", "year", "month","indication"))
-
 # flowchart
-RAM_flowchart_discontinued_psoriasis<-length(unique(RAM_discontinued_per_indication_psoriasis$person_id))
-RAM_flowchart_discontinued_acne<-length(unique(RAM_discontinued_per_indication_acne$person_id))
-RAM_flowchart_discontinued_dermatitis<-length(unique(RAM_discontinued_per_indication_dermatitis$person_id))
-
+if(length(unique(RAM_discontinued_per_indication_psoriasis$person_id))>0){RAM_flowchart_discontinued_psoriasis<-length(unique(RAM_discontinued_per_indication_psoriasis$person_id))}else{RAM_flowchart_discontinued_psoriasis<-0}
+if(length(unique(RAM_discontinued_per_indication_acne$person_id))>0){RAM_flowchart_discontinued_acne<-length(unique(RAM_discontinued_per_indication_acne$person_id))}else{RAM_flowchart_discontinued_acne<-0}
+if(length(unique(RAM_discontinued_per_indication_dermatitis$person_id))>0){RAM_flowchart_discontinued_dermatitis<-length(unique(RAM_discontinued_per_indication_dermatitis$person_id))}else{RAM_flowchart_discontinued_dermatitis<-0}
+# cleanup
 rm(RAM_discontinued_per_indication_psoriasis,RAM_discontinued_per_indication_acne,RAM_discontinued_per_indication_dermatitis)
 
 # Count discontinued by age, month, year

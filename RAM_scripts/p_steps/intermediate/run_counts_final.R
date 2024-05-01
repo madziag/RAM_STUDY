@@ -24,75 +24,71 @@ if(multiple_regions == T){
     path_dir<-paste0(multiple_regions_dir, regions[reg], "/")
     # Sources folders for each region 
     source(paste0(pre_dir,"info.R"))
-    source(paste0(pre_dir,"study_parameters.R"))
-    rm(actual_tables, METADATA_subp)
-    ## First removes g_intermediate/g_output
+    source(paste0(pre_dir,"parameters/study_parameters.R"))
+    ## First removes empty g_intermediate/g_output
     if("g_intermediate" %in% list.files(projectFolder)){unlink(paste0(projectFolder,"/g_intermediate"), recursive = T)}
     if("g_output"       %in% list.files(projectFolder)){unlink(paste0(projectFolder,"/g_output")      , recursive = T)}
     # Moves g_intermediate and g_output folders from corresponding region folder into LOT4_scripts folder
     file.move(paste0(projectFolder, "/", regions[reg], "/g_intermediate"), paste0(projectFolder,"/g_intermediate"))
     file.move(paste0(projectFolder, "/", regions[reg], "/g_output"), paste0(projectFolder,"/g_output"))
-    ## Create g_output folder if not there (e.g. for sensitivity analysis it has been taken out)
-    invisible(ifelse(!dir.exists(paste0(projectFolder, "/g_output")), dir.create(paste0(projectFolder, "/g_output")), FALSE))
-    output_dir<-paste0(projectFolder, "/g_output/")
-    # Baseline tables folders
-    invisible(ifelse(!dir.exists(paste0(output_dir, "baseline_tables")), dir.create(paste0(output_dir, "baseline_tables")), FALSE))
-    baseline_tables_dir<-paste0(output_dir, "baseline_tables")
-    # Inside baseline tables folders - for storing records to be pulled for pooling
-    invisible(ifelse(!dir.exists(paste0(g_intermediate, "recs_for_baseline_table_pooling")), dir.create(paste0(g_intermediate, "recs_for_baseline_table_pooling")), FALSE))
-    baseline_pooling_dir<-paste0(g_intermediate, "recs_for_baseline_table_pooling")
-    # Pregnancy Counts 
-    invisible(ifelse(!dir.exists(paste0(output_dir, "pregnancy_counts")), dir.create(paste0(output_dir, "pregnancy_counts")), FALSE))
-    preg_med_counts<-paste0(output_dir, "pregnancy_counts")
-    # Contraceptive counts 
-    invisible(ifelse(!dir.exists(paste0(output_dir, "contraceptive_counts")), dir.create(paste0(output_dir, "contraceptive_counts")), FALSE))
-    contraceptive_counts_dir<-paste0(output_dir, "contraceptive_counts")
+    # Create Treatment Episodes folder 
+    # Retinoid Treatment Episodes
+    invisible(ifelse(!dir.exists(paste0(g_intermediate,"/retinoid_treatment_episodes")), dir.create(paste0(g_intermediate,"/retinoid_treatment_episodes")), FALSE))
+    retinoid_treatment_episodes<-paste0(g_intermediate,"retinoid_treatment_episodes/")
+    # RAM Treatment Episodes
+    invisible(ifelse(!dir.exists(paste0(g_intermediate,"/RAM_treatment_episodes")), dir.create(paste0(g_intermediate,"/RAM_treatment_episodes")), FALSE))
+    RAM_treatment_episodes<-paste0(g_intermediate,"RAM_treatment_episodes/")
     # Medicines Counts
     invisible(ifelse(!dir.exists(paste0(output_dir, "medicines_counts")), dir.create(paste0(output_dir, "medicines_counts")), FALSE))
     medicines_counts_dir<-paste0(output_dir, "medicines_counts")
-    # Pregnancy Test Counts
-    invisible(ifelse(!dir.exists(paste0(output_dir, "pregnancy_test_counts")), dir.create(paste0(output_dir, "pregnancy_test_counts")), FALSE))
-    pregnancy_test_counts_dir<-paste0(output_dir, "pregnancy_test_counts")
-    # Creates new plot folder
-    invisible(ifelse(!dir.exists(paste0(output_dir, "plots")), dir.create(paste0(output_dir, "plots")), FALSE))
-    plot_folder<-paste0(output_dir, "plots")
+    # For medicine counts data 
+    invisible(ifelse(!dir.exists(paste0(g_intermediate, "/counts_dfs", sep="")), dir.create(paste0(g_intermediate, "/counts_dfs")), FALSE))
+    counts_dfs_dir<-paste0(g_intermediate,"counts_dfs/")
+    # Create folder to store incidence, prevalence and discontinued individual level records 
+    invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"retinoid_counts")),dir.create(paste0(counts_dfs_dir,"retinoid_counts")),FALSE))
+    retinoid_counts_dfs<-paste0(counts_dfs_dir,"retinoid_counts/")
+    # To save incidence and prevalence patient level records  
+    invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"RAM_Objective_1")),dir.create(paste0(counts_dfs_dir,"RAM_Objective_1")),FALSE))
+    objective1_temp_dir<-paste0(counts_dfs_dir,"RAM_Objective_1/")
+    # To save incidence and prevalence counts/rates
+    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_1")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_1")),FALSE))
+    objective1_dir<-paste0(medicines_counts_dir,"/RAM_Objective_1")
+    # To save incidence and prevalence stratified counts
+    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_1/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_1/Stratified")),FALSE))
+    objective1_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_1/Stratified")
     
-    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/","stratified")), dir.create(paste0(medicines_counts_dir,"/","stratified")), FALSE))
-    medicines_stratified_dir<-paste0(medicines_counts_dir,"/","stratified")
-    # Create stratified by age groups folder
-    invisible(ifelse(!dir.exists(paste0(medicines_stratified_dir,"/","age_group")), dir.create(paste0(medicines_stratified_dir,"/","age_group")), FALSE))
-    medicines_stratified_age_groups<-paste0(medicines_stratified_dir ,"/","age_group")
-    # Create stratified by tx_duration folder 
-    invisible(ifelse(!dir.exists(paste0(medicines_stratified_dir,"/","tx_duration")), dir.create(paste0(medicines_stratified_dir,"/","tx_duration")), FALSE))
-    medicines_stratified_tx_dur<-paste0(medicines_stratified_dir ,"/","tx_duration")
-    # Create stratified by indication folder 
-    invisible(ifelse(!dir.exists(paste0(medicines_stratified_dir,"/","indication")), dir.create(paste0(medicines_stratified_dir,"/","indication")), FALSE))
-    medicines_stratified_indication<-paste0(medicines_stratified_dir ,"/","indication")
-    # Create stratified by reason folder
-    invisible(ifelse(!dir.exists(paste0(medicines_stratified_dir,"/","reasons_for_discontinuation")), dir.create(paste0(medicines_stratified_dir,"/","reasons_for_discontinuation")), FALSE))
-    medicines_stratified_reasons<-paste0(medicines_stratified_dir ,"/","reasons_for_discontinuation")
-    # Move stratified records into stratified folders
-    # Create stratified folder
-    invisible(ifelse(!dir.exists(paste0(contraceptive_counts_dir,"/","stratified")), dir.create(paste0(contraceptive_counts_dir,"/","stratified")), FALSE))
-    contraceptives_stratified_dir<-paste0(contraceptive_counts_dir,"/","stratified")
-    # Create stratified by age groups folder
-    invisible(ifelse(!dir.exists(paste0(contraceptives_stratified_dir,"/","age_group")), dir.create(paste0(contraceptives_stratified_dir,"/","age_group")), FALSE))
-    contraceptives_stratified_age_groups<-paste0(contraceptives_stratified_dir ,"/","age_group")
-    # Create stratified by indication folder
-    invisible(ifelse(!dir.exists(paste0(contraceptives_stratified_dir,"/","indication")), dir.create(paste0(contraceptives_stratified_dir,"/","indication")), FALSE))
-    contraceptives_stratified_indication<-paste0(contraceptives_stratified_dir ,"/","indication")
-    # Create stratified by contraception type folder
-    invisible(ifelse(!dir.exists(paste0(contraceptives_stratified_dir,"/","contra_type")), dir.create(paste0(contraceptives_stratified_dir,"/","contra_type")), FALSE))
-    contraceptives_stratified_contra_type<-paste0(contraceptives_stratified_dir ,"/","contra_type")
+    # To save switching and discontinued patient level records  
+    invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"RAM_Objective_2")),dir.create(paste0(counts_dfs_dir,"RAM_Objective_2")),FALSE))
+    objective2_temp_dir<-paste0(counts_dfs_dir,"RAM_Objective_2/")
+    # To save switching and discontinued counts/rates
+    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_2")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_2")),FALSE))
+    objective2_dir<-paste0(medicines_counts_dir,"/RAM_Objective_2")
+    # To save switching and discontinued stratified counts
+    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_2/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_2/Stratified")),FALSE))
+    objective2_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_2/Stratified")
     
-    # Path to diagnosis, procedures and procedures_dx folders 
-    diagnoses_pop<-paste0(projectFolder,"/g_intermediate/tmp/diagnoses/")
-    procedures_pop<-paste0(projectFolder,"/g_intermediate/tmp/procedures/")
-    procedures_dxcodes_pop<-paste0(projectFolder,"/g_intermediate/tmp/procedures_dxcodes/")
-    medications_pop<-paste0(projectFolder,"/g_intermediate/tmp/medications/")
-    mo_pop<-paste0(projectFolder,"/g_intermediate/tmp/med_obs/")
+    # To save concomitance patient level records  
+    invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"RAM_Objective_3")),dir.create(paste0(counts_dfs_dir,"RAM_Objective_3")),FALSE))
+    objective3_temp_dir<-paste0(counts_dfs_dir,"RAM_Objective_3/")
+    # To save concomitance patient level records  
+    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_3")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_3")),FALSE))
+    objective3_dir<-paste0(medicines_counts_dir,"/RAM_Objective_3")
+    # To save concomitance patient level records  
+    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")),FALSE))
+    objective3_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_3/Stratified")
+    
+    # To save concomitance patient level records  
+    invisible(ifelse(!dir.exists(paste0(counts_dfs_dir,"RAM_Objective_4")),dir.create(paste0(counts_dfs_dir,"RAM_Objective_4")),FALSE))
+    objective4_temp_dir<-paste0(counts_dfs_dir,"RAM_Objective_4/")
+    # To save concomitance patient level records  
+    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_4")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_4")),FALSE))
+    objective4_dir<-paste0(medicines_counts_dir,"/RAM_Objective_4")
+    # To save concomitance patient level records  
+    invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")),FALSE))
+    objective4_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")
+ 
     # Source file
-    source(paste0(pre_dir,"run_counts_final_each_pop.R"))
+    source(paste0(pre_dir,"intermediate/run_counts_final_each_pop.R"))
     # Delete g_intermediate/g_output folders before moving the modified ones back 
     if("g_intermediate" %in% list.files(paste0(projectFolder,"/", regions[reg]))){unlink(paste0(projectFolder,"/", regions[reg],"/g_intermediate"), recursive = T)}
     if("g_output"       %in% list.files(paste0(projectFolder,"/", regions[reg]))){unlink(paste0(projectFolder,"/", regions[reg],"/g_output")      , recursive = T)}
