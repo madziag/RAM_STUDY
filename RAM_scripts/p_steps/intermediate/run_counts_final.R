@@ -86,7 +86,9 @@ if(multiple_regions == T){
     # To save concomitance patient level records  
     invisible(ifelse(!dir.exists(paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")),dir.create(paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")),FALSE))
     objective4_strat_dir<-paste0(medicines_counts_dir,"/RAM_Objective_4/Stratified")
- 
+    # baseline tables 
+    invisible(ifelse(!dir.exists(paste0(output_dir, "baseline_tables")), dir.create(paste0(output_dir, "baseline_tables")), FALSE))
+    baseline_tables_dir<-paste0(output_dir, "baseline_tables")
     # Source file
     source(paste0(pre_dir,"intermediate/run_counts_final_each_pop.R"))
     # Delete g_intermediate/g_output folders before moving the modified ones back 

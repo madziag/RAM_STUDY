@@ -45,10 +45,8 @@ for(pop in 1:length(populations)){
     source(paste0(pre_dir, "counts/RAM_teratogenic.R"))
     # flow chart 
     source(paste0(pre_dir, "flowchart.R"))
-    # # Creates baseline tables #
-    # # source(paste0(pre_dir,"7_FinalCounts/create_baseline_tables.R"))
-
-
+    # Creates baseline tables #
+    source(paste0(pre_dir,"baseline/baseline_tables.R"))
 
     #source(paste0(pre_dir, "plots_mask.R"))
     # Converts all .rds files into .csv or .xlsx (indicated by user)

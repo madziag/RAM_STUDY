@@ -339,7 +339,7 @@ RAM_incidence_per_indication_acne<-RAM_incidence_per_indication[ATC%in%c("D07AA0
                                                                            "H02AB10","H02AB11","H02AB13","H02AB14","H02AB15",
                                                                            "H02AB17","J01AA08","J01FA01","J01FA10","S01AA17","S01AA26"),]
 
-RAM_incidence_per_indication_dermatitis<-RAM_incidence_per_indication[ATC%in%c("D07AB01","D07AB02", "D07AB03","D07AB04","D07AB05",
+RAM_incidence_per_indication_dermatitis<-RAM_incidence_per_indication[ATC%in%c("D07AB01","D07AB02","D07AB03","D07AB04","D07AB05",
                                                                                  "D07AB06","D07AB07","D07AB08","D07AB09","D07AB10",
                                                                                  "D07AB11","D07AB19","D07AB21","D07AB30","D11AH01",
                                                                                  "D11AH02","H02AB06","H02AB07","L04AD01","L04AX01","L04AX03"),]
