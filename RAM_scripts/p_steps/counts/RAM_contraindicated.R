@@ -7,7 +7,7 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # RAM Concomitance Data 
   RAM_concomitance_data<-as.data.table(readRDS(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_data.rds")))
   # Get contraindicated ATC subset
-  RAM_concomitance_data_contraindicated<-RAM_concomitance_data[ATC.RAM %in% c("H02AB02","L04AX30", "A11CA01", "J01AA07"),]
+  RAM_concomitance_data_contraindicated<-RAM_concomitance_data[ATC.RAM %in%contraindicated_codes,]
   
   #############################################################################################
   ##### Per User ##############################################################################

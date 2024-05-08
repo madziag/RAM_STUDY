@@ -31,6 +31,8 @@
 #############################################################################################
 # Loads denominator and empty df
 source(paste0(pre_dir,"denominators/load_denominator.R"))
+# Load RAM codes per indications
+source(paste0(pre_dir,"parameters/RAM_codes_per_indication.R"))
 # Loads RAM treatment episodes
 RAM_episodes<-readRDS(paste0(RAM_treatment_episodes, pop_prefix, "_RAM_CMA_treatment_episodes.rds"))
 # Merges with study population to get birth_date, entry and exit dates
@@ -141,34 +143,11 @@ for(group in 1:length(unique(prevalence_by_age$age_group))){
 RAM_prevalence_per_indication<-RAM_episodes_expanded[!duplicated(RAM_episodes_expanded[,c("person_id", "episode.start", "year", "month", "ATC")])]
 # Removes any records where episode.day falls outside of entry & exit dates
 RAM_prevalence_per_indication<-RAM_prevalence_per_indication[episode.day>=entry_date & episode.day<=exit_date,]
-# Create subsets for each indication 
-RAM_prevalence_per_indication_psoriasis<-RAM_prevalence_per_indication[ATC%in%c("D05AC01","D05AD02","D05BA02","D05BX51","D07AB01",
-                                                                                "D07AB02","D07AB03","D07AB04","D07AB05","D07AB06",
-                                                                                "D07AB07","D07AB08","D07AB09","D07AB10","D07AB11",
-                                                                                "D07AB19","D07AB21","D07AB30","D07AC01","D07AC02",
-                                                                                "D07AC03","D07AC04","D07AC05","D07AC06","D07AC07",
-                                                                                "D07AC08","D07AC09","D07AC10","D07AC11","D07AC12",
-                                                                                "D07AC13","D07AC14","D07AC15","D07AC16","D07AC17",
-                                                                                "D07AC18","D07AC19","D07AC21","D07AD01","D07AD02",
-                                                                                "D11AH01","D11AH02","L04AA32","L04AB01","L04AB02",
-                                                                                "L04AB04","L04AB05","L04AC05","L04AC10","L04AC12",
-                                                                                "L04AC13","L04AC16","L04AC17","L04AD01","L04AX07"),]
 
-RAM_prevalence_per_indication_acne<-RAM_prevalence_per_indication[ATC%in%c("D07AA01","D07AB19","D10AA01","D10AA02","D10AA03",
-                                                                           "D10AE01","D10AF01","D10AF02","D10AF51","D10AF52",
-                                                                           "H02AA01","H02AA02","H02AA03","H02AB01","H02AB02",
-                                                                           "H02AB03","H02AB04","H02AB05","H02AB08","H02AB09",
-                                                                           "H02AB10","H02AB11","H02AB13","H02AB14","H02AB15",
-                                                                           "H02AB17","J01AA08","J01FA01","J01FA10","S01AA17","S01AA26"),]
-
-RAM_prevalence_per_indication_dermatitis<-RAM_prevalence_per_indication[ATC%in%c("D07AB01","D07AB02", "D07AB03","D07AB04","D07AB05",
-                                                                                 "D07AB06","D07AB07","D07AB08","D07AB09","D07AB10",
-                                                                                 "D07AB11","D07AB19","D07AB21","D07AB30","D11AH01",
-                                                                                 "D11AH02","H02AB06","H02AB07","L04AD01","L04AX01","L04AX03"),]
-
-RAM_prevalence_per_indication_psoriasis[,indication:="psoriasis"]
-RAM_prevalence_per_indication_acne[,indication:="acne"]
-RAM_prevalence_per_indication_dermatitis[,indication:="dermatitis"]
+# Create subsets for each indication -> some codes can be for different indications
+RAM_prevalence_per_indication_psoriasis<-RAM_prevalence_per_indication[ATC%in%psoriasis_codes,][,indication:="psoriasis"]
+RAM_prevalence_per_indication_acne<-RAM_prevalence_per_indication[ATC%in%acne_codes,][,indication:="acne"]
+RAM_prevalence_per_indication_dermatitis<-RAM_prevalence_per_indication[ATC%in%dermatitis_codes,][,indication:="dermatitis"]
 
 RAM_prevalence_all_ind<-rbindlist(list(RAM_prevalence_per_indication_psoriasis,RAM_prevalence_per_indication_acne,RAM_prevalence_per_indication_dermatitis))
 # To be counted once per person, Year-month, indication
@@ -320,33 +299,9 @@ for(group in 1:length(unique(incidence_by_age$age_group))){
 # Removes any records where episode.day falls outside of entry & exit dates
 RAM_incidence_per_indication<-RAM_incidence_per_indication[episode.start>=entry_date & episode.start<=exit_date,]
 # Create subsets for each indication 
-RAM_incidence_per_indication_psoriasis<-RAM_incidence_per_indication[ATC%in%c("D05AC01","D05AD02","D05BA02","D05BX51","D07AB01",
-                                                                                "D07AB02","D07AB03","D07AB04","D07AB05","D07AB06",
-                                                                                "D07AB07","D07AB08","D07AB09","D07AB10","D07AB11",
-                                                                                "D07AB19","D07AB21","D07AB30","D07AC01","D07AC02",
-                                                                                "D07AC03","D07AC04","D07AC05","D07AC06","D07AC07",
-                                                                                "D07AC08","D07AC09","D07AC10","D07AC11","D07AC12",
-                                                                                "D07AC13","D07AC14","D07AC15","D07AC16","D07AC17",
-                                                                                "D07AC18","D07AC19","D07AC21","D07AD01","D07AD02",
-                                                                                "D11AH01","D11AH02","L04AA32","L04AB01","L04AB02",
-                                                                                "L04AB04","L04AB05","L04AC05","L04AC10","L04AC12",
-                                                                                "L04AC13","L04AC16","L04AC17","L04AD01","L04AX07"),]
-
-RAM_incidence_per_indication_acne<-RAM_incidence_per_indication[ATC%in%c("D07AA01","D07AB19","D10AA01","D10AA02","D10AA03",
-                                                                           "D10AE01","D10AF01","D10AF02","D10AF51","D10AF52",
-                                                                           "H02AA01","H02AA02","H02AA03","H02AB01","H02AB02",
-                                                                           "H02AB03","H02AB04","H02AB05","H02AB08","H02AB09",
-                                                                           "H02AB10","H02AB11","H02AB13","H02AB14","H02AB15",
-                                                                           "H02AB17","J01AA08","J01FA01","J01FA10","S01AA17","S01AA26"),]
-
-RAM_incidence_per_indication_dermatitis<-RAM_incidence_per_indication[ATC%in%c("D07AB01","D07AB02","D07AB03","D07AB04","D07AB05",
-                                                                                 "D07AB06","D07AB07","D07AB08","D07AB09","D07AB10",
-                                                                                 "D07AB11","D07AB19","D07AB21","D07AB30","D11AH01",
-                                                                                 "D11AH02","H02AB06","H02AB07","L04AD01","L04AX01","L04AX03"),]
-
-RAM_incidence_per_indication_psoriasis[,indication:="psoriasis"]
-RAM_incidence_per_indication_acne[,indication:="acne"]
-RAM_incidence_per_indication_dermatitis[,indication:="dermatitis"]
+RAM_incidence_per_indication_psoriasis<-RAM_incidence_per_indication[ATC%in%psoriasis_codes,][,indication:="psoriasis"]
+RAM_incidence_per_indication_acne<-RAM_incidence_per_indication[ATC%in%acne_codes,][,indication:="acne"]
+RAM_incidence_per_indication_dermatitis<-RAM_incidence_per_indication[ATC%in%dermatitis_codes,][,indication:="dermatitis"]
 
 RAM_incidence_all_ind<-rbindlist(list(RAM_incidence_per_indication_psoriasis,RAM_incidence_per_indication_acne,RAM_incidence_per_indication_dermatitis))
 # To be counted once per person, Year-month, indication
@@ -504,33 +459,9 @@ for(group in 1:length(unique(discontinued_by_age$age_group))){
 # Removes any records where episode.day falls outside of entry & exit dates
 RAM_discontinued_per_indication<-RAM_discontinued_per_indication[episode.end>=entry_date & episode.end<=exit_date,]
 # Create subsets for each indication 
-RAM_discontinued_per_indication_psoriasis<-RAM_discontinued_per_indication[ATC%in%c("D05AC01","D05AD02","D05BA02","D05BX51","D07AB01",
-                                                                               "D07AB02","D07AB03","D07AB04","D07AB05","D07AB06",
-                                                                               "D07AB07","D07AB08","D07AB09","D07AB10","D07AB11",
-                                                                               "D07AB19","D07AB21","D07AB30","D07AC01","D07AC02",
-                                                                               "D07AC03","D07AC04","D07AC05","D07AC06","D07AC07",
-                                                                               "D07AC08","D07AC09","D07AC10","D07AC11","D07AC12",
-                                                                               "D07AC13","D07AC14","D07AC15","D07AC16","D07AC17",
-                                                                               "D07AC18","D07AC19","D07AC21","D07AD01","D07AD02",
-                                                                               "D11AH01","D11AH02","L04AA32","L04AB01","L04AB02",
-                                                                               "L04AB04","L04AB05","L04AC05","L04AC10","L04AC12",
-                                                                               "L04AC13","L04AC16","L04AC17","L04AD01","L04AX07"),]
-
-RAM_discontinued_per_indication_acne<-RAM_discontinued_per_indication[ATC%in%c("D07AA01","D07AB19","D10AA01","D10AA02","D10AA03",
-                                                                          "D10AE01","D10AF01","D10AF02","D10AF51","D10AF52",
-                                                                          "H02AA01","H02AA02","H02AA03","H02AB01","H02AB02",
-                                                                          "H02AB03","H02AB04","H02AB05","H02AB08","H02AB09",
-                                                                          "H02AB10","H02AB11","H02AB13","H02AB14","H02AB15",
-                                                                          "H02AB17","J01AA08","J01FA01","J01FA10","S01AA17","S01AA26"),]
-
-RAM_discontinued_per_indication_dermatitis<-RAM_discontinued_per_indication[ATC%in%c("D07AB01","D07AB02", "D07AB03","D07AB04","D07AB05",
-                                                                                "D07AB06","D07AB07","D07AB08","D07AB09","D07AB10",
-                                                                                "D07AB11","D07AB19","D07AB21","D07AB30","D11AH01",
-                                                                                "D11AH02","H02AB06","H02AB07","L04AD01","L04AX01","L04AX03"),]
-
-RAM_discontinued_per_indication_psoriasis[,indication:="psoriasis"]
-RAM_discontinued_per_indication_acne[,indication:="acne"]
-RAM_discontinued_per_indication_dermatitis[,indication:="dermatitis"]
+RAM_discontinued_per_indication_psoriasis<-RAM_discontinued_per_indication[ATC%in%psoriasis_codes,][,indication:="psoriasis"]
+RAM_discontinued_per_indication_acne<-RAM_discontinued_per_indication[ATC%in%acne_codes,][,indication:="acne"]
+RAM_discontinued_per_indication_dermatitis<-RAM_discontinued_per_indication[ATC%in%dermatitis_codes,][,indication:="dermatitis"]
 
 RAM_discontinued_all_ind<-rbindlist(list(RAM_discontinued_per_indication_psoriasis,RAM_discontinued_per_indication_acne,RAM_discontinued_per_indication_dermatitis))
 # To be counted once per person, Year-month, indication

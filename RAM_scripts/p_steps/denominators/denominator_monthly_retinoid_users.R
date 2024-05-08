@@ -8,15 +8,24 @@
 # Create a subset of study population who has ever used Retinoids 
 # Read in Retinoid records that were created from monthly counts ATC
 retinoid_meds<-as.data.table(readRDS(paste0(medications_pop, pop_prefix, "_Retinoid_MEDS.rds")))
+# all retinoid users 
+#flowchart
+all_retinoid_users<-length(unique(retinoid_meds$person_id))
+
 # Retinoid use should be between study entry and exit to be counted 
 retinoid_meds<-retinoid_meds[Date>=entry_date & Date<=exit_date,]
+# after excluding meds that fall outside of entry and exit dates 
+#flowchart
+retinoid_within_entry_exit<-length(unique(retinoid_meds[,person_id]))
 # remove duplicates
 retinoid_users<- as.data.table(unique(retinoid_meds, by = c("person_id")))[,c("person_id")]
+
 # Get study population subset i.e only those who have retinoid prescriptions 
 retinoid_study_population<-as.data.table(merge(study_population, retinoid_users, by = "person_id")) 
 
 # Saves file
 saveRDS(data.table(retinoid_study_population), paste0(populations_dir, pop_prefix, "_retinoid_study_population.rds"))
+
 # this script counts the number of eligible participants per month (as persons may leave and enter the database)
 
 if(nrow(retinoid_study_population)>0){
@@ -60,5 +69,6 @@ if(nrow(retinoid_study_population)>0){
   plot(FUmonths_df_retinoid$studyFUmonths, FUmonths_df_retinoid$Freq, ylab="Persons Observed per Month", xlab="Year and Month")
   invisible(dev.off())
 }
+
 
 

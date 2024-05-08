@@ -27,6 +27,8 @@ for(pop in 1:length(populations)){
   source(paste0(pre_dir,"counts/monthly_counts_ATC.R")) # This creates datasets of Retinoids as well as RAMs
   # Creates denominator file
   source(paste0(pre_dir,"denominators/denominator_monthly_retinoid_users.R"))
+  # Flowchart
+  source(paste0(pre_dir,"flowchart_base_population.R"))
   }
 
 # Moves all counts, plots, formatted files to preliminary_counts folder

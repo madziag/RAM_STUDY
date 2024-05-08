@@ -165,37 +165,13 @@ if(nrow(RAM_concomit)>0){
   
   
 
-  ################ concomit by Indication ###################  
+  ################ Concomit by Indication ###################  
   # Removes any records where episode.day falls outside of entry & exit dates
   RAM_concomit_per_indication<-RAM_concomit_per_indication[episode.start.RAM>=entry_date & episode.start.RAM<=exit_date,]
   # Create subsets for each indication 
-  RAM_concomit_per_indication_psoriasis<-RAM_concomit_per_indication[ATC.RAM%in%c("D05AC01","D05AD02","D05BA02","D05BX51","D07AB01",
-                                                                                  "D07AB02","D07AB03","D07AB04","D07AB05","D07AB06",
-                                                                                  "D07AB07","D07AB08","D07AB09","D07AB10","D07AB11",
-                                                                                  "D07AB19","D07AB21","D07AB30","D07AC01","D07AC02",
-                                                                                  "D07AC03","D07AC04","D07AC05","D07AC06","D07AC07",
-                                                                                  "D07AC08","D07AC09","D07AC10","D07AC11","D07AC12",
-                                                                                  "D07AC13","D07AC14","D07AC15","D07AC16","D07AC17",
-                                                                                  "D07AC18","D07AC19","D07AC21","D07AD01","D07AD02",
-                                                                                  "D11AH01","D11AH02","L04AA32","L04AB01","L04AB02",
-                                                                                  "L04AB04","L04AB05","L04AC05","L04AC10","L04AC12",
-                                                                                  "L04AC13","L04AC16","L04AC17","L04AD01","L04AX07"),]
-  
-  RAM_concomit_per_indication_acne<-RAM_concomit_per_indication[ATC.RAM%in%c("D07AA01","D07AB19","D10AA01","D10AA02","D10AA03",
-                                                                             "D10AE01","D10AF01","D10AF02","D10AF51","D10AF52",
-                                                                             "H02AA01","H02AA02","H02AA03","H02AB01","H02AB02",
-                                                                             "H02AB03","H02AB04","H02AB05","H02AB08","H02AB09",
-                                                                             "H02AB10","H02AB11","H02AB13","H02AB14","H02AB15",
-                                                                             "H02AB17","J01AA08","J01FA01","J01FA10","S01AA17","S01AA26"),]
-  
-  RAM_concomit_per_indication_dermatitis<-RAM_concomit_per_indication[ATC.RAM%in%c("D07AB01","D07AB02", "D07AB03","D07AB04","D07AB05",
-                                                                                   "D07AB06","D07AB07","D07AB08","D07AB09","D07AB10",
-                                                                                   "D07AB11","D07AB19","D07AB21","D07AB30","D11AH01",
-                                                                                   "D11AH02","H02AB06","H02AB07","L04AD01","L04AX01","L04AX03"),]
-  
-  RAM_concomit_per_indication_psoriasis[,indication:="psoriasis"]
-  RAM_concomit_per_indication_acne[,indication:="acne"]
-  RAM_concomit_per_indication_dermatitis[,indication:="dermatitis"]
+  RAM_concomit_per_indication_psoriasis<-RAM_concomit_per_indication[ATC.RAM%in%psoriasis_codes,][,indication:="psoriasis"]
+  RAM_concomit_per_indication_acne<-RAM_concomit_per_indication[ATC.RAM%in%acne_codes,][,indication:="acne"]
+  RAM_concomit_per_indication_dermatitis<-RAM_concomit_per_indication[ATC.RAM%in%dermatitis_codes,][,indication:="dermatitis"]
   
   RAM_concomit_all_ind<-rbindlist(list(RAM_concomit_per_indication_psoriasis,RAM_concomit_per_indication_acne,RAM_concomit_per_indication_dermatitis))
   # To be counted once per person, Year-month, indication
@@ -242,7 +218,50 @@ if(nrow(RAM_concomit)>0){
     
   }
   
+  # For Contraindicated codes 
+  RAM_concomit_contra<-RAM_concomit_all_ind[ATC.RAM%in%contraindicated_codes]
+    # Count concomit_contra by indication, month, year
+  concomit_contra_by_indication<-RAM_concomit_contra[,.N, by = .(year,month, indication)]
+  concomit_contra_by_indication<-within(concomit_contra_by_indication,YM<-sprintf("%d-%02d",year,month))
   
+  # Total for contras 
+  concomit_contra_all<-RAM_concomit_contra[,.N, by = .(year,month)]
+  concomit_contra_all<-as.data.table(merge(x=empty_df,y=concomit_contra_all,by=c("year","month"),all.x=TRUE))[is.na(N),N:=0]
+  concomit_contra_all<-within(concomit_contra_all,YM<-sprintf("%d-%02d",year,month))
+  setnames(concomit_contra_all,"N","Freq")
+  
+  
+  for(group in 1:length(unique(concomit_contra_by_indication$indication))){
+    # Create a subset of age group
+    each_group<-concomit_contra_by_indication[indication==unique(concomit_contra_by_indication$indication)[group]]
+    # Merge with empty df (for counts that do not have counts for all months and years of study)
+    each_group<-as.data.table(merge(x=empty_df,y=each_group,by=c("year","month"),all.x=TRUE))
+    # Fills in missing values with 0
+    each_group[is.na(N),N:=0][is.na(indication),indication:=unique(concomit_contra_by_indication$indication)[group]]
+    # Adjust for PHARMO
+    if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
+    # Create YM variable 
+    each_group<-within(each_group,YM<-sprintf("%d-%02d",year,month))
+    
+    # Prepare denominator
+    concomit_contra_count_min <- concomit_contra_all[,c("YM","Freq")]
+  
+    # Merge age-group subset count with all prevalent counts 
+    indication_concomit_contra_count<-merge(x=each_group,y=concomit_contra_count_min,by=c("YM"),all.x=TRUE)
+    # Masking set at 0
+    indication_concomit_contra_count[,masked:=0]
+    # If masking applies
+    if(mask==T){indication_concomit_contra_count[N>0&N<5,N:=5][Freq>0&Freq<5,Freq:=5][,masked:=1]}
+    # Calculates rates
+    indication_concomit_contra_count<-indication_concomit_contra_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
+    # Drop columns you don't need 
+    indication_concomit_contra_count<-indication_concomit_contra_count[,c("YM","N","Freq","rates","masked")]
+    
+    # Save files in medicine counts folder
+    saveRDS(indication_concomit_contra_count, (paste0(objective3_strat_dir,"/", pop_prefix,"_RAM_concomit_contra_counts_", unique(concomit_contra_by_indication$indication)[group],"_indication_group.rds")))
+    
+  }
+
 } else {
   print("There was no concomitant use of RAM and Retinoids")
   RAM_flowchart_concomit<-0

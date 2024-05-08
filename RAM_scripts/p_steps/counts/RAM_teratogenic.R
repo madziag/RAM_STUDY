@@ -12,7 +12,7 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # Create year-months columns based on episode.day
   RAM_meds[,year:=year(Date)][,month:=month(Date)]
   # Get contraindicated ATC subset
-  RAM_meds_teratogenic<-RAM_meds[Code %in% c("L04AA32","L04AX01","L04AX07","D05BA02","L04AX03","A11CA01","J01AA07","J01FA01", "J01FA10","L04AD01", "L04AB01","L04AB02","L04AC05","L04AC10","L04AC13","L04AC12","L04AC16","L04AC17"),]
+  RAM_meds_teratogenic<-RAM_meds[Code %in% teratogenic_codes,]
   
 
   #############################################################################################
@@ -79,7 +79,6 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   if(nrow(RAM_meds)>0){RAM_flowchart_allRAM_records<-nrow(RAM_meds)}else{RAM_flowchart_allRAM_records<-0}
   if(nrow(RAM_meds_teratogenic)>0){RAM_flowchart_teratogenic_records<-nrow(RAM_meds_teratogenic)}else{RAM_flowchart_teratogenic_records<-0}
   
-  
   # Total concomitance counts per record (for all concomitant records and for concomitant records in contraindicated ATCs)
   RAM_meds_per_record_counts<-RAM_meds[,.N, by = .(year,month)]
   RAM_meds_per_record_teratogenic_counts<-RAM_meds_teratogenic[,.N, by = .(year,month)]
@@ -121,6 +120,51 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   RAM_teratogenic_rates_per_record<-RAM_teratogenic_rates_per_record[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
   # Saves files in medicine counts folder
   saveRDS(RAM_teratogenic_rates_per_record, paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_record.rds")) 
+  
+  # Create subsets for each indication -> some codes can be for different indications
+  RAM_meds_teratogenic_psoriasis<-RAM_meds_teratogenic[Code%in%psoriasis_codes,][,indication:="psoriasis"]
+  RAM_meds_teratogenic_acne<-RAM_meds_teratogenic[Code%in%acne_codes,][,indication:="acne"]
+  RAM_meds_teratogenic_dermatitis<-RAM_meds_teratogenic[Code%in%dermatitis_codes,][,indication:="dermatitis"]
+  
+  RAM_meds_teratogenic_ind<-rbindlist(list(RAM_meds_teratogenic_psoriasis,RAM_meds_teratogenic_acne,RAM_meds_teratogenic_dermatitis))
+  # To be counted once per person, Year-month, indication
+  RAM_meds_teratogenic_ind<-unique(RAM_meds_teratogenic_ind,by=c("person_id", "year", "month","indication"))
+  
+  # Count teratogenic_contra by indication month, year
+  teratogenic_by_indication<-RAM_meds_teratogenic_ind[,.N, by = .(year,month,indication)]
+  teratogenic_by_indication<-within(teratogenic_by_indication,YM<-sprintf("%d-%02d",year,month))
+  
+  for(group in 1:length(unique(teratogenic_by_indication$indication))){
+    # Create a subset of age group
+    each_group<-teratogenic_by_indication[indication==unique(teratogenic_by_indication$indication)[group]]
+    # Merge with empty df (for counts that do not have counts for all months and years of study)
+    each_group<-as.data.table(merge(x=empty_df,y=each_group,by=c("year","month"),all.x=TRUE))
+    # Fills in missing values with 0
+    each_group[is.na(N),N:=0][is.na(indication),indication:=unique(teratogenic_by_indication[,indication])[group]]
+    # Adjust for PHARMO
+    if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
+    # Create YM variable 
+    each_group<-within(each_group,YM<-sprintf("%d-%02d",year,month))
+    
+    # Prepare denominator
+    teratogenic_count_min <- RAM_teratogenic_rates_per_record[,c("YM","Freq")]
+    
+    # Merge age-group subset count with all prevalent counts 
+    indication_teratogenic_count<-merge(x=each_group,y=teratogenic_count_min,by=c("YM"),all.x=TRUE)
+    # Masking set at 0
+    indication_teratogenic_count[,masked:=0]
+    # If masking applies
+    if(mask==T){indication_teratogenic_count[N>0&N<5,N:=5][Freq>0&Freq<5,Freq:=5][,masked:=1]}
+    # Calculates rates
+    indication_teratogenic_count<-indication_teratogenic_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
+    # Drop columns you don't need 
+    indication_teratogenic_count<-indication_teratogenic_count[,c("YM","N","Freq","rates","masked")]
+    
+    # Save files in medicine counts folder
+    saveRDS(indication_teratogenic_count, (paste0(objective4_strat_dir,"/", pop_prefix,"_RAM_teratogenic_counts_", unique(teratogenic_by_indication$indication)[group],"_indication_group.rds")))
+    
+  }
+  
   
   
   # Clean up 

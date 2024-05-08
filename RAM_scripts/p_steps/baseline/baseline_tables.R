@@ -112,7 +112,8 @@ for (i in 1:length(Pops_for_baseline_tables)){
 
 
 
-
+# Clean up 
+rm(list= grep("Pops|RAM_a|RAM_d|RAM_p|RAM_m", ls(), value = TRUE))
 
 
 
