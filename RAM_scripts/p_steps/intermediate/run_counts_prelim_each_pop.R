@@ -29,7 +29,7 @@ for(pop in 1:length(populations)){
   source(paste0(pre_dir,"denominators/denominator_monthly_retinoid_users.R"))
   # Flowchart
   source(paste0(pre_dir,"flowchart_base_population.R"))
-  }
+}
 
 # Moves all counts, plots, formatted files to preliminary_counts folder
 pattern1 = c("monthly_counts", "plots", paste0(my_format,"_files"))
@@ -41,7 +41,3 @@ for(file in list.files(path = tmp, pattern ="events_")){unlink(paste0(tmp, file)
 for(file in list.files(path = output_dir, pattern ="FlowChart")){unlink(paste0(output_dir, file), recursive = TRUE)}
 # Delete Study_population_folder 
 for(file in list.files(path = output_dir, pattern ="STUDY_SOURCE_POPULATION")){unlink(paste0(output_dir, file), recursive = TRUE)}
-
-
-
-

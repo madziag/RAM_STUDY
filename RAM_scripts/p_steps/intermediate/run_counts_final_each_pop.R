@@ -1,3 +1,4 @@
+
 #Author: Magdalena Gamba M.D.
 #email: m.a.gamba@uu.nl
 #Organisation: Utrecht University, Utrecht, The Netherlands
@@ -25,14 +26,14 @@ for(pop in 1:length(populations)){
   if(is_PHARMO){retinoid_study_population<-retinoid_study_population[year(retinoid_study_population$exit_date) < 2020,]}else{retinoid_study_population<-retinoid_study_population}
   # Assign study population prefix name
   pop_prefix<-gsub("_retinoid_study_population.rds", "", populations[pop])
-
+  
   if(nrow(retinoid_study_population)>0){
     # Creates Retinoid treatment episodes 
     source(paste0(pre_dir, "treatmentepisodes/retinoid_treatment_episodes.R"))
-    # Creates RAM treatment episodes in Retinoid Users 
-    source(paste0(pre_dir, "treatmentepisodes/RAM_treatment_episodes.R"))
     # Counts of prevalence, incidence, discontinuation - medicines use
     source(paste0(pre_dir, "counts/retinoid_incidence_prevalence_discontinuation.R"))
+    # Creates RAM treatment episodes in Retinoid Users 
+    source(paste0(pre_dir, "treatmentepisodes/RAM_treatment_episodes.R"))
     # Counts of prevalence, incidence, discontinuation - medicines use
     source(paste0(pre_dir, "counts/RAM_incidence_prevalence_discontinuation.R"))
     # Counts of switchers and general concomitance 
@@ -43,8 +44,10 @@ for(pop in 1:length(populations)){
     source(paste0(pre_dir, "counts/RAM_contraindicated.R"))
     # Counts concomitance: teratogenic 
     source(paste0(pre_dir, "counts/RAM_teratogenic.R"))
+    # Counts by indication
+    source(paste0(pre_dir,"counts/counts_by_indication.R"))
     # flow chart 
-    source(paste0(pre_dir, "flowchart.R"))
+    # source(paste0(pre_dir, "flowchart.R"))
     # Creates baseline tables #
     source(paste0(pre_dir,"baseline/baseline_tables.R"))
     # general counts 

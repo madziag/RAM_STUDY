@@ -37,20 +37,20 @@ retinoid_discontinued_counts<-as.data.table(readRDS(paste0(medicines_counts_dir,
 ### Data Cleaning 
 ## RAM Incident data
 # Drop unneeded columns
-RAM_prevalence_data<-RAM_prevalence_data[,c("person_id", "episode.start", "episode.end",  "ATC", "birth_date", "entry_date", "exit_date")]
+RAM_prevalence_data<-RAM_prevalence_data[,c("person_id", "episode.start", "episode.end",  "ATC.RAM", "birth_date", "entry_date", "exit_date")]
 # Change date format
 RAM_prevalence_data[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
 # Rename columns
-setnames(RAM_prevalence_data, old = c("episode.start","episode.end","ATC"), new = c("episode.start.RAM","episode.end.RAM","ATC.RAM"))
+setnames(RAM_prevalence_data, old = c("episode.start","episode.end"), new = c("episode.start.RAM","episode.end.RAM"))
 # Remove duplicates
 RAM_prevalence_data<-unique(RAM_prevalence_data, by = c("person_id", "episode.start.RAM", "episode.end.RAM", "ATC.RAM"))
 
 ## Retinoid Discontinuation data
-retinoid_discontinued_data<-retinoid_discontinued_data[,c("person_id", "episode.start", "episode.end", "ATC")]
+retinoid_discontinued_data<-retinoid_discontinued_data[,c("person_id", "episode.start", "episode.end", "ATC.retinoid")]
 # Change date format
 retinoid_discontinued_data[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)]
 # Rename columns
-setnames(retinoid_discontinued_data, old = c("episode.start","episode.end","ATC"), new = c("episode.start.retinoid","episode.end.retinoid","ATC.retinoid"))
+setnames(retinoid_discontinued_data, old = c("episode.start","episode.end"), new = c("episode.start.retinoid","episode.end.retinoid"))
 # Remove duplicates
 retinoid_discontinued_data<-unique(retinoid_discontinued_data, by = c("person_id", "episode.start.retinoid", "episode.end.retinoid"))
 
@@ -70,8 +70,8 @@ RAM_retinoid_use<-RAM_retinoid_use[episode.start.RAM>=entry_date & episode.start
 
 # Get the switchers
 RAM_retinoid_use[,switcher:=ifelse(episode.start.RAM>episode.end.retinoid & episode.start.RAM-episode.end.retinoid <90, 1, 
-                              ifelse(episode.start.RAM==episode.end.retinoid, 1,
-                                     ifelse(episode.start.RAM>episode.start.retinoid & episode.end.retinoid-episode.start.RAM<30 & episode.end.retinoid-episode.start.RAM>0, 1, 0)))]
+                                   ifelse(episode.start.RAM==episode.end.retinoid, 1,
+                                          ifelse(episode.start.RAM>episode.start.retinoid & episode.end.retinoid-episode.start.RAM<30 & episode.end.retinoid-episode.start.RAM>0, 1, 0)))]
 # Get data with switchers only 
 RAM_switcher <- RAM_retinoid_use[switcher==1,]
 
@@ -98,7 +98,7 @@ if(nrow(RAM_switcher)>0){
   #flowchart
   if(length(unique(RAM_switcher$person_id))>0){RAM_flowchart_switcher<-length(unique(RAM_switcher$person_id))}else{RAM_flowchart_switcher<-0}
   ### Switcher Version 1: Denominator => Retinoid Prevalence ###
-
+  
   # Switching Counts 
   RAM_switcher_counts<-RAM_switcher[,.N, by = .(year,month)]
   # Adjust for PHARMO
@@ -166,60 +166,6 @@ if(nrow(RAM_switcher)>0){
     
     # Save files in medicine counts folder
     saveRDS(age_group_switcher_count, (paste0(objective2_strat_dir,"/", pop_prefix,"_RAM_switcher_counts_", unique(switcher_by_age$age_group)[group],"_age_group.rds")))
-  }
-  
-  
-  ################ switcher by Indication ###################  
-  # Removes any records where episode.day falls outside of entry & exit dates
-  RAM_switcher_per_indication<-RAM_switcher_per_indication[episode.start.RAM>=entry_date & episode.start.RAM<=exit_date,]
-  # Create subsets for each indication 
-  RAM_switcher_per_indication_psoriasis<-RAM_switcher_per_indication[ATC.RAM%in%psoriasis_codes,][,indication:="psoriasis"]
-  RAM_switcher_per_indication_acne<-RAM_switcher_per_indication[ATC.RAM%in%acne_codes,][,indication:="acne"]
-  RAM_switcher_per_indication_dermatitis<-RAM_switcher_per_indication[ATC.RAM%in%dermatitis_codes,][,indication:="dermatitis"]
-  
-  RAM_switcher_all_ind<-rbindlist(list(RAM_switcher_per_indication_psoriasis,RAM_switcher_per_indication_acne,RAM_switcher_per_indication_dermatitis))
-  # To be counted once per person, Year-month, indication
-  RAM_switcher_all_ind<-unique(RAM_switcher_all_ind,by=c("person_id", "year", "month","indication"))
-  #flowchart
-  if(length(unique(RAM_switcher_per_indication_psoriasis$person_id))>0){RAM_flowchart_switcher_psoriasis<-length(unique(RAM_switcher_per_indication_psoriasis$person_id))}else{RAM_flowchart_switcher_psoriasis<-0}
-  if(length(unique(RAM_switcher_per_indication_acne$person_id))>0){RAM_flowchart_switcher_acne<-length(unique(RAM_switcher_per_indication_acne$person_id))}else{RAM_flowchart_switcher_acne<-0}
-  if(length(unique(RAM_switcher_per_indication_dermatitis$person_id))>0){RAM_flowchart_switcher_dermatitis<-length(unique(RAM_switcher_per_indication_dermatitis$person_id))}else{RAM_flowchart_switcher_dermatitis<-0}
-  # cleanup
-  rm(RAM_switcher_per_indication_psoriasis,RAM_switcher_per_indication_acne,RAM_switcher_per_indication_dermatitis)
-  
-  # Count switcher by age, month, year
-  switcher_by_indication<-RAM_switcher_all_ind[,.N, by = .(year,month, indication)]
-  
-  for(group in 1:length(unique(switcher_by_indication$indication))){
-    # Create a subset of age group
-    each_group<-switcher_by_indication[indication==unique(switcher_by_indication$indication)[group]]
-    # Merge with empty df (for counts that do not have counts for all months and years of study)
-    each_group<-as.data.table(merge(x=empty_df,y=each_group,by=c("year","month"),all.x=TRUE))
-    # Fills in missing values with 0
-    each_group[is.na(N),N:=0][is.na(indication),indication:=unique(switcher_by_indication$indication)[group]]
-    # Adjust for PHARMO
-    if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-    # Create YM variable 
-    each_group<-within(each_group,YM<-sprintf("%d-%02d",year,month))
-    
-    # Prepare denominator
-    switcher_count_min <- RAM_switcher_rates1[,c("YM","N")]
-    setnames(switcher_count_min,"N","Freq")
-    
-    # Merge age-group subset count with all prevalent counts 
-    indication_switcher_count<-merge(x=each_group,y=switcher_count_min,by=c("YM"),all.x=TRUE)
-    # Masking set at 0
-    indication_switcher_count[,masked:=0]
-    # If masking applies
-    if(mask==T){indication_switcher_count[N>0&N<5,N:=5][Freq>0&Freq<5,Freq:=5][,masked:=1]}
-    # Calculates rates
-    indication_switcher_count<-indication_switcher_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
-    # Drop columns you don't need 
-    indication_switcher_count<-indication_switcher_count[,c("YM","N","Freq","rates","masked")]
-    
-    # Save files in medicine counts folder
-    saveRDS(indication_switcher_count, (paste0(objective2_strat_dir,"/", pop_prefix,"_RAM_switcher_counts_", unique(switcher_by_indication$indication)[group],"_indication_group.rds")))
-    
   }
   
 } else {

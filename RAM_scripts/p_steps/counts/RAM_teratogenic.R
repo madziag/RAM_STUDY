@@ -7,14 +7,19 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # RAM prescriptions 
   RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
   # Get RAM meds in Retinoid population only 
+  # Rename ATC columns in both Retinoid and RAM population 
+  setnames(RAM_meds,"Code", "ATC.RAM", skip_absent = TRUE)
+  setnames(retinoid_study_population,"Code", "ATC.retinoid", skip_absent = TRUE)
+  # Merge the files 
   RAM_meds<-merge(RAM_meds,retinoid_study_population[,c("person_id")], by=c("person_id"))
-
+  
   # Create year-months columns based on episode.day
   RAM_meds[,year:=year(Date)][,month:=month(Date)]
   # Get contraindicated ATC subset
-  RAM_meds_teratogenic<-RAM_meds[Code %in% teratogenic_codes,]
+  RAM_meds_teratogenic<-RAM_meds[ATC.RAM %in% teratogenic_codes,]
   
-
+  saveRDS(RAM_meds_teratogenic,paste0(objective4_temp_dir, pop_prefix, "_RAM_meds_teratogenic.rds"))
+  
   #############################################################################################
   ##### Per User ##############################################################################
   #############################################################################################
@@ -24,7 +29,7 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # Flowchart
   if(length(unique(RAM_meds_per_user$person_id))>0){RAM_flowchart_allRAM_users<-length(unique(RAM_meds_per_user$person_id))}else{RAM_flowchart_allRAM_users<-0}
   if(length(unique(RAM_meds_per_user_teratogenic$person_id))>0){ RAM_flowchart_teratogenic_users<-length(unique(RAM_meds_per_user_teratogenic$person_id))}else{ RAM_flowchart_teratogenic_users<-0}
- 
+  
   
   # Total concomitance counts per user (for all concomitant users and for concomitant users in contraindicated ATCs)
   RAM_meds_per_user_counts<-RAM_meds_per_user[,.N, by = .(year,month)]
@@ -58,7 +63,7 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   setnames(RAM_meds_per_user_counts, "N", "Freq")
   
   # Merge the two files 
-  # Numerator=> Number of contraindicated RAM users in concomitance with Retinoids
+  # Numerator=> Number of teratogenic users 
   # Denominator => All users who have RAM in concomitance with Retinoid
   RAM_teratogenic_rates_per_user<-merge(x = RAM_meds_per_user_teratogenic_counts[,c("YM","N","masked","true_value")], y = RAM_meds_per_user_counts[,c("YM", "Freq")], by = c("YM"), all.x = TRUE)
   # Calculates rates
@@ -121,54 +126,8 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # Saves files in medicine counts folder
   saveRDS(RAM_teratogenic_rates_per_record, paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_record.rds")) 
   
-  # Create subsets for each indication -> some codes can be for different indications
-  RAM_meds_teratogenic_psoriasis<-RAM_meds_teratogenic[Code%in%psoriasis_codes,][,indication:="psoriasis"]
-  RAM_meds_teratogenic_acne<-RAM_meds_teratogenic[Code%in%acne_codes,][,indication:="acne"]
-  RAM_meds_teratogenic_dermatitis<-RAM_meds_teratogenic[Code%in%dermatitis_codes,][,indication:="dermatitis"]
-  
-  RAM_meds_teratogenic_ind<-rbindlist(list(RAM_meds_teratogenic_psoriasis,RAM_meds_teratogenic_acne,RAM_meds_teratogenic_dermatitis))
-  # To be counted once per person, Year-month, indication
-  RAM_meds_teratogenic_ind<-unique(RAM_meds_teratogenic_ind,by=c("person_id", "year", "month","indication"))
-  
-  # Count teratogenic_contra by indication month, year
-  teratogenic_by_indication<-RAM_meds_teratogenic_ind[,.N, by = .(year,month,indication)]
-  teratogenic_by_indication<-within(teratogenic_by_indication,YM<-sprintf("%d-%02d",year,month))
-  
-  for(group in 1:length(unique(teratogenic_by_indication$indication))){
-    # Create a subset of age group
-    each_group<-teratogenic_by_indication[indication==unique(teratogenic_by_indication$indication)[group]]
-    # Merge with empty df (for counts that do not have counts for all months and years of study)
-    each_group<-as.data.table(merge(x=empty_df,y=each_group,by=c("year","month"),all.x=TRUE))
-    # Fills in missing values with 0
-    each_group[is.na(N),N:=0][is.na(indication),indication:=unique(teratogenic_by_indication[,indication])[group]]
-    # Adjust for PHARMO
-    if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-    # Create YM variable 
-    each_group<-within(each_group,YM<-sprintf("%d-%02d",year,month))
-    
-    # Prepare denominator
-    teratogenic_count_min <- RAM_teratogenic_rates_per_record[,c("YM","Freq")]
-    
-    # Merge age-group subset count with all prevalent counts 
-    indication_teratogenic_count<-merge(x=each_group,y=teratogenic_count_min,by=c("YM"),all.x=TRUE)
-    # Masking set at 0
-    indication_teratogenic_count[,masked:=0]
-    # If masking applies
-    if(mask==T){indication_teratogenic_count[N>0&N<5,N:=5][Freq>0&Freq<5,Freq:=5][,masked:=1]}
-    # Calculates rates
-    indication_teratogenic_count<-indication_teratogenic_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
-    # Drop columns you don't need 
-    indication_teratogenic_count<-indication_teratogenic_count[,c("YM","N","Freq","rates","masked")]
-    
-    # Save files in medicine counts folder
-    saveRDS(indication_teratogenic_count, (paste0(objective4_strat_dir,"/", pop_prefix,"_RAM_teratogenic_counts_", unique(teratogenic_by_indication$indication)[group],"_indication_group.rds")))
-    
-  }
-  
-  
-  
   # Clean up 
-rm(list = grep("age_group|each_group|RAM_concomit|RAM_meds|RAM_rates|RAM_teratogenic", ls(), value = TRUE))
+  rm(list = grep("age_group|each_group|RAM_concomit|RAM_meds|RAM_rates|RAM_teratogenic", ls(), value = TRUE))
   
 } else {
   print("There are no records for retinoid-RAM concomitance")

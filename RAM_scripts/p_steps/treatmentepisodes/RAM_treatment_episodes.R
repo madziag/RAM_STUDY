@@ -14,49 +14,50 @@
 # Looks for RAM files in medications folder 
 # Reads in Retinoid medication data
 RAM_meds_all<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
+setnames(RAM_meds_all,"Code","ATC.RAM")
 # Get RAM meds in Retinoid users 
 RAM_meds_in_retinoid_users<-merge(retinoid_study_population[,"person_id"], RAM_meds_all, by="person_id")
-my_name<-levels(factor(RAM_meds_in_retinoid_users$Code))
-split_data<-split(RAM_meds_in_retinoid_users, RAM_meds_in_retinoid_users$Code)
+my_name<-levels(factor(RAM_meds_in_retinoid_users$ATC.RAM))
+split_data<-split(RAM_meds_in_retinoid_users, RAM_meds_in_retinoid_users$ATC.RAM)
 
 # Loops over each RAM ATC codes -> creates treatment episodes for each unique code 
 for (i in 1:length(split_data)){
   
   cma_data<-split_data[[i]]
   # Get ATC code
-  ATC_code<-unique(cma_data$Code)
+  ATC_code<-unique(cma_data$ATC.RAM)
   # assumed duration column values are assigned dependent on user input DAP_specific_DOT
   if(DAP_specific_DOT==T){source(paste0(pre_dir, "parameters/DAP_specific_assumed_durations.R"))}else{cma_data[,assumed_duration:=30]}
   
   cma_data$Date<-as.Date(cma_data$Date, format="%Y%m%d")
   # Creates treatment episodes
   treat_episode<-compute.treatment.episodes(data= cma_data,
-                                               ID.colname = "person_id",
-                                               event.date.colname = "Date",
-                                               event.duration.colname = "assumed_duration",
-                                               event.daily.dose.colname = NA,
-                                               medication.class.colname = "Code",
-                                               carryover.within.obs.window = TRUE,
-                                               carry.only.for.same.medication = TRUE,
-                                               consider.dosage.change =FALSE,
-                                               #change between medicines counts as a new treatment episode
-                                               medication.change.means.new.treatment.episode = TRUE,
-                                               dosage.change.means.new.treatment.episode = FALSE,
-                                               maximum.permissible.gap = 30,
-                                               maximum.permissible.gap.unit = c("days", "weeks", "months", "years", "percent")[1],
-                                               maximum.permissible.gap.append.to.episode = FALSE,
-                                               followup.window.start = 0,
-                                               followup.window.start.unit = c("days", "weeks", "months", "years")[1],
-                                               followup.window.duration = 365 * 12,
-                                               followup.window.duration.unit = c("days", "weeks", "months", "years")[1],
-                                               event.interval.colname = "event.interval",
-                                               gap.days.colname = "gap.days",
-                                               date.format = "%Y-%m-%d",
-                                               parallel.backend = c("none", "multicore", "snow", "snow(SOCK)", "snow(MPI)",
-                                                                    "snow(NWS)")[1],
-                                               parallel.threads = "auto",
-                                               suppress.warnings = FALSE,
-                                               return.data.table = FALSE
+                                            ID.colname = "person_id",
+                                            event.date.colname = "Date",
+                                            event.duration.colname = "assumed_duration",
+                                            event.daily.dose.colname = NA,
+                                            medication.class.colname = "ATC.RAM",
+                                            carryover.within.obs.window = TRUE,
+                                            carry.only.for.same.medication = TRUE,
+                                            consider.dosage.change =FALSE,
+                                            #change between medicines counts as a new treatment episode
+                                            medication.change.means.new.treatment.episode = TRUE,
+                                            dosage.change.means.new.treatment.episode = FALSE,
+                                            maximum.permissible.gap = 30,
+                                            maximum.permissible.gap.unit = c("days", "weeks", "months", "years", "percent")[1],
+                                            maximum.permissible.gap.append.to.episode = FALSE,
+                                            followup.window.start = 0,
+                                            followup.window.start.unit = c("days", "weeks", "months", "years")[1],
+                                            followup.window.duration = 365 * 12,
+                                            followup.window.duration.unit = c("days", "weeks", "months", "years")[1],
+                                            event.interval.colname = "event.interval",
+                                            gap.days.colname = "gap.days",
+                                            date.format = "%Y-%m-%d",
+                                            parallel.backend = c("none", "multicore", "snow", "snow(SOCK)", "snow(MPI)",
+                                                                 "snow(NWS)")[1],
+                                            parallel.threads = "auto",
+                                            suppress.warnings = FALSE,
+                                            return.data.table = FALSE
   ) 
   
   # Converts treatment episode to data table
@@ -76,10 +77,9 @@ for (i in 1:length(split_data)){
   # Episode end must be > than episode.start
   treat_episode1<-treat_episode1[episode.end > episode.start,]
   # Add column for ATC code 
-  treat_episode1[,ATC:=ATC_code]
-  # Remove unnecessary columns
-  treat_episode1[,entry_date:=NULL][,exit_date:=NULL]
+  treat_episode1[,ATC.RAM:=ATC_code]
 
+  
   # Saves files (only if df is not empty)
   if (nrow(treat_episode1)>0){
     saveRDS(treat_episode1, (paste0(RAM_treatment_episodes, pop_prefix, "_", my_name[i],"_CMA_RAM_treatment_episodes.rds")))

@@ -52,6 +52,8 @@ if(length(med_files)>0){
     df<-df[,lapply(.SD, FUN=function(x) gsub("^$|^ $", NA, x))] # Makes sure missing data is read appropriately
     setnames(df,"meaning_of_drug_record","Meaning") # Renames column names
     setnames(df,"medicinal_product_atc_code", "Code") # Renames column names
+    # Remove nonbreaking spaces 
+    df[,Code:=gsub("\u00A0","",Code, fixed = TRUE)]
     # Creates new column Date. It takes the date from date_dispensing. If value from date_dispensing is missing, it takes the date value from date_prescription
     df<-df[,Date:= ifelse(!is.na(date_dispensing), date_dispensing, date_prescription)]
     colnames_events<-names(df)

@@ -42,7 +42,7 @@ source(paste0(pre_dir,"denominators/load_denominator.R"))
 # Loads retinoid treatment episodes
 retinoid_episodes<-readRDS(paste0(retinoid_treatment_episodes, pop_prefix, "_Retinoid_CMA_treatment_episodes.rds"))
 # Merges with study population to get birth_date, entry and exit dates
-retinoid_episodes<-merge(retinoid_episodes, retinoid_study_population[,c("person_id", "birth_date", "entry_date","exit_date")], by = "person_id")
+retinoid_episodes<-merge(retinoid_episodes, retinoid_study_population[,c("person_id", "birth_date")], by = "person_id")
 # Changes columns to correct data type/add column that indicates rownumber
 retinoid_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
 # # Removes not needed columns
@@ -65,10 +65,10 @@ retinoid_episodes_expanded[,year:=year(episode.day)][,month:=month(episode.day)]
 ##################################################################################################
 ### Numerator = Number of female subjects in cohort with valproate/retinoid episode overlapping the month by at least 1 day 
 # Removes duplicates - keeps only the earliest record of person_id, year, month => we get the first record of person for every month in every year
+# Removes any records where episode.day falls outside of entry & exit dates
+retinoid_episodes_expanded<-retinoid_episodes_expanded[episode.day>=entry_date & episode.day<=exit_date,]
 # Creates data where each row represents a month of treatment within the treatment episode (patient is represented once per month)
 retinoid_prevalence<-retinoid_episodes_expanded[!duplicated(retinoid_episodes_expanded[,c("person_id", "episode.start", "year", "month")])]
-# Removes any records where episode.day falls outside of entry & exit dates
-retinoid_prevalence<-retinoid_prevalence[episode.day>=entry_date & episode.day<=exit_date,]
 # Removes unnecessary columns
 retinoid_prevalence<-retinoid_prevalence[,-c("rowID", "idnum", "episode.day")]
 # Prevalence Counts
@@ -107,7 +107,7 @@ retinoid_incidence<-retinoid_episodes_for_incidence[!duplicated(retinoid_episode
 retinoid_incidence<-retinoid_incidence[order(person_id, episode.start)]
 retinoid_incidence<-retinoid_incidence[, head(.SD, 1), by = "person_id"]
 # Removes all episode starts that fall outside entry_date and exit_date
-retinoid_incidence<-retinoid_incidence[episode.start >= entry_date & episode.start<=exit_date,]
+retinoid_incidence<-retinoid_incidence[episode.start>=entry_date & episode.start<=exit_date,]
 # Creates year and month columns
 retinoid_incidence[,year:=year(episode.start)][,month:=month(episode.start)]
 # Removes unnecessary columns
@@ -136,7 +136,7 @@ retinoid_incidence_rates<-retinoid_incidence_rates[,c("YM", "N", "Freq", "rates"
 saveRDS(retinoid_incidence_rates, paste0(medicines_counts_dir, "/", pop_prefix, "_Retinoid_incidence_counts.rds"))
 # Saves incidence dfs
 saveRDS(retinoid_incidence, paste0(retinoid_counts_dfs, pop_prefix, "_Retinoid_incidence_data.rds"))
-       
+
 
 ##################################################################################################
 ############################# Calculates Discontinuation  ########################################
@@ -196,4 +196,3 @@ saveRDS(retinoid_discontinued, paste0(retinoid_counts_dfs, pop_prefix, "_Retinoi
 
 # Clean up 
 rm(list = grep("^retinoid_discont|^retinoid_inc|^retinoid_prev|^retinoid_episodes_|retinoid_episodes", ls(), value = TRUE))
-

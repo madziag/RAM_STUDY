@@ -1,3 +1,4 @@
+
 #Author: Magdalena Gamba M.D.
 #email: m.a.gamba@uu.nl
 #Organisation: Utrecht University, Utrecht, The Netherlands
@@ -69,6 +70,3 @@ if(nrow(retinoid_study_population)>0){
   plot(FUmonths_df_retinoid$studyFUmonths, FUmonths_df_retinoid$Freq, ylab="Persons Observed per Month", xlab="Year and Month")
   invisible(dev.off())
 }
-
-
-
