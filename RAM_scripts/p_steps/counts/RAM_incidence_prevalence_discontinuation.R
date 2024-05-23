@@ -37,6 +37,15 @@ source(paste0(pre_dir,"parameters/RAM_codes_per_indication.R"))
 RAM_episodes<-readRDS(paste0(RAM_treatment_episodes, pop_prefix, "_RAM_CMA_treatment_episodes.rds"))
 # Merges with study population to get birth_date, entry and exit dates
 RAM_episodes<-merge(RAM_episodes, retinoid_study_population[,c("person_id", "birth_date")], by = "person_id")
+
+# We need to exclude any RAMs that do not occur after a Retinoid 
+# Load Incident Retinoid Treatment Episodes
+retinoid_incidence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_incidence_data.rds")))
+setnames(retinoid_incidence_data,"episode.start","episode.start.retinoid")
+# Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
+RAM_episodes<-retinoid_incidence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_episodes,on=.(person_id)]
+# Compare dates and any RAMs whose end date does not overlap a Retinoid episode start date (incidence) is removed 
+RAM_episodes<-RAM_episodes[episode.start>=episode.start.retinoid,][,c("ATC.retinoid","episode.start.retinoid"):=NULL]
 # Changes columns to correct data type/add column that indicates rownumber
 RAM_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
 # Add row numbers to each row 
@@ -76,8 +85,6 @@ RAM_prevalence<-RAM_episodes_expanded[!duplicated(RAM_episodes_expanded[,c("pers
 RAM_prevalence<-RAM_prevalence[,-c("rowID","idnum","episode.day")]
 # Reorder columns
 setcolorder(RAM_prevalence, c("person_id", "episode.ID" , "episode.start","end.episode.gap.days","episode.duration","episode.end","ATC.RAM","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
-#flowchart
-if(length(unique(RAM_prevalence$person_id))>0){RAM_flowchart_prevalence<-length(unique(RAM_prevalence$person_id))}else{RAM_flowchart_prevalence<-0}
 # Prevalence Counts
 RAM_prevalence_counts<-RAM_prevalence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -174,8 +181,6 @@ RAM_incidence<-RAM_incidence[,-c("rowID", "previous.episode.end", "incident_user
 RAM_incidence_per_indication<-RAM_incidence
 # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
 RAM_incidence<-unique(RAM_incidence, by=c("person_id", "year", "month"))
-#flowchart
-if(RAM_flowchart_incidence<-length(unique(RAM_incidence$person_id))>0){RAM_flowchart_incidence<-length(unique(RAM_incidence$person_id))}else{RAM_flowchart_incidence<-0}
 # Incidence Counts
 RAM_incidence_counts<-RAM_incidence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -273,8 +278,6 @@ RAM_discontinued<-RAM_discontinued[,-c("rowID", "next.episode.start", "discontin
 RAM_discontinued_per_indication<-RAM_discontinued
 # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
 RAM_discontinued<-unique(RAM_discontinued, by=c("person_id", "year", "month"))
-#flowchart
-if(length(unique(RAM_discontinued$person_id))){RAM_flowchart_discontinued<-length(unique(RAM_discontinued$person_id))}else{RAM_flowchart_discontinued<-0}
 # Performs discontinued counts 
 RAM_discontinued_counts<-RAM_discontinued[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -340,7 +343,7 @@ for(group in 1:length(unique(discontinued_by_age$age_group))){
 }
 
 # Clean up 
-rm(list = grep("^age_group|^RAM_discont|^RAM_inc|^RAM_prev|^incidence_|^prevalence_|^discontinued_|each_group|RAM_episodes|indication_", ls(), value = TRUE))
+rm(list = grep("^age_group|^RAM_discont|^RAM_inc|^RAM_prev|^incidence_|^prevalence_|^discontinued_|each_group|RAM_episodes|retinoid_incidence_data", ls(), value = TRUE))
 
 
 

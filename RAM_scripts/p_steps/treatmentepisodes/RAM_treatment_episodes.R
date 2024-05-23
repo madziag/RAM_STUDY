@@ -15,6 +15,7 @@
 # Reads in Retinoid medication data
 RAM_meds_all<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
 setnames(RAM_meds_all,"Code","ATC.RAM")
+
 # Get RAM meds in Retinoid users 
 RAM_meds_in_retinoid_users<-merge(retinoid_study_population[,"person_id"], RAM_meds_all, by="person_id")
 my_name<-levels(factor(RAM_meds_in_retinoid_users$ATC.RAM))
@@ -101,6 +102,15 @@ if(length(RAM_episode_files)>0){
   if(nrow(RAM_episodes>0)){saveRDS(RAM_episodes, (paste0(RAM_treatment_episodes, pop_prefix, "_RAM_CMA_treatment_episodes.rds")))}
 }
 
-
+# Do counts of all RAM meds
+## Retinoid incidence Data ## 
+retinoid_incidence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_incidence_data.rds")))
+setnames(retinoid_incidence_data,"episode.start","episode.start.retinoid")
+# Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
+RAM_meds_all<-retinoid_incidence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_meds_all[,c("person_id","ATC.RAM","Date")],on=.(person_id)]
+RAM_meds_all<-RAM_meds_all[Date>=episode.start.retinoid,]
+# flowchart 
+RAM_flowchart_allRAM_users<-nrow(unique(RAM_meds_all,by="person_id"))
+RAM_flowchart_allRAM_records<-nrow(RAM_meds_all)
 # Clean up 
-rm(list= grep("^cma|^split|^treat|RAM_meds_all|RAM_episodes|RAM_meds_", ls(), value = TRUE))
+rm(list= grep("^cma|^split|^treat|RAM_episodes|RAM_meds_", ls(), value = TRUE))

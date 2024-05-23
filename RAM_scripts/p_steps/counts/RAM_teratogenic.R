@@ -26,11 +26,6 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   RAM_meds_per_user<-unique(RAM_meds, by=c("person_id", "year", "month"))
   RAM_meds_per_user_teratogenic<-unique(RAM_meds_teratogenic, by=c("person_id", "year", "month"))
   
-  # Flowchart
-  if(length(unique(RAM_meds_per_user$person_id))>0){RAM_flowchart_allRAM_users<-length(unique(RAM_meds_per_user$person_id))}else{RAM_flowchart_allRAM_users<-0}
-  if(length(unique(RAM_meds_per_user_teratogenic$person_id))>0){ RAM_flowchart_teratogenic_users<-length(unique(RAM_meds_per_user_teratogenic$person_id))}else{ RAM_flowchart_teratogenic_users<-0}
-  
-  
   # Total concomitance counts per user (for all concomitant users and for concomitant users in contraindicated ATCs)
   RAM_meds_per_user_counts<-RAM_meds_per_user[,.N, by = .(year,month)]
   RAM_meds_per_user_teratogenic_counts<-RAM_meds_per_user_teratogenic[,.N, by = .(year,month)]
@@ -79,10 +74,6 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # Remove true duplicates
   RAM_meds<-unique(RAM_meds)
   RAM_meds_teratogenic<-unique(RAM_meds_teratogenic)
-  
-  # Flowchart
-  if(nrow(RAM_meds)>0){RAM_flowchart_allRAM_records<-nrow(RAM_meds)}else{RAM_flowchart_allRAM_records<-0}
-  if(nrow(RAM_meds_teratogenic)>0){RAM_flowchart_teratogenic_records<-nrow(RAM_meds_teratogenic)}else{RAM_flowchart_teratogenic_records<-0}
   
   # Total concomitance counts per record (for all concomitant records and for concomitant records in contraindicated ATCs)
   RAM_meds_per_record_counts<-RAM_meds[,.N, by = .(year,month)]

@@ -95,9 +95,7 @@ if(nrow(RAM_switcher)>0){
   RAM_switcher_per_indication<-RAM_switcher
   # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
   RAM_switcher<-unique(RAM_switcher, by=c("person_id", "year", "month"))
-  #flowchart
-  if(length(unique(RAM_switcher$person_id))>0){RAM_flowchart_switcher<-length(unique(RAM_switcher$person_id))}else{RAM_flowchart_switcher<-0}
-  ### Switcher Version 1: Denominator => Retinoid Prevalence ###
+   ### Switcher Version 1: Denominator => Retinoid Prevalence ###
   
   # Switching Counts 
   RAM_switcher_counts<-RAM_switcher[,.N, by = .(year,month)]
@@ -177,7 +175,7 @@ if(nrow(RAM_switcher)>0){
 }
 
 # Clean up 
-rm(list = grep("^age_group|each_group|RAM_episodes|RAM_episodes|retinoid_d|RAM_switch|RAM_ret|RAM_incidence|RAM_meds_in|switcher_by_age|switcher_count_min|retinoid_prevalence_counts|indication_|switcher_by", ls(), value = TRUE))
+rm(list = grep("^age_group|each_group|RAM_episodes|RAM_episodes|retinoid_d|RAM_switch|RAM_ret|RAM_incidence|RAM_meds_in|switcher_by_age|switcher_count_min|retinoid_prevalence_counts|switcher_by|RAM_prevalence_data", ls(), value = TRUE))
 
 
 

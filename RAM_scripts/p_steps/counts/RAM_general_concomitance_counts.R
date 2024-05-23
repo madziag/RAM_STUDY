@@ -102,8 +102,6 @@ if(nrow(RAM_concomit)>0){
   ### General Concomitance ###
   # Get 1 per person id per month-year
   RAM_concomit_user<- unique(RAM_concomit, by=c("person_id", "year", "month"))
-  #flowchart 
-  if(length(unique(RAM_concomit_user$person_id))>0){RAM_flowchart_concomit_users<-length(unique(RAM_concomit_user$person_id))}else{RAM_flowchart_concomit_users<-0}
   # Concomitant Counts 
   RAM_concomit_counts<-RAM_concomit_user[,.N, by = .(year,month)]
   # Adjust for PHARMO
@@ -160,7 +158,7 @@ if(nrow(RAM_concomit)>0){
     age_group_concomit_count<-age_group_concomit_count[,c("YM","N","Freq","rates","masked")]
     
     # Save files in medicine counts folder
-    saveRDS(age_group_concomit_count, (paste0(objective3_strat_dir,"/", pop_prefix,"_RAM_concomit_counts_", unique(concomit_by_age$age_group)[group],"_age_group.rds")))
+    saveRDS(age_group_concomit_count, (paste0(objective3_strat_dir,"/", pop_prefix,"_RAM_general_concomitance_counts_", unique(concomit_by_age$age_group)[group],"_age_group.rds")))
   } 
   
 } else {
