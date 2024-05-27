@@ -9,18 +9,22 @@
 # Retinoid study population # Already loaded 
 # RAM meds
 RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
-## Retinoid Incidence Data ## 
-retinoid_incidence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_incidence_data.rds")))
-setnames(retinoid_incidence_data,"episode.start","episode.start.retinoid")
+# Keep RAM meds that occur in Retinoid users only, and only if RAM prescriptions occur after Retinoid incidence use
+# Read in retinoid incidence data
+retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
+# Rename episode start column
+setnames(retinoid_prevalence_data,"episode.start","episode.start.retinoid") 
+# Get first retinoid use in entry into study (could be incidence or prevalent use)
+retinoid_prevalence_data<-unique(retinoid_prevalence_data, by=c("person_id"))
+
 # Merge with retinoid incidence data 
-RAM_meds<-retinoid_incidence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_meds,on=.(person_id)]
+RAM_meds<-retinoid_prevalence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_meds,on=.(person_id)]
 # Keep records where RAM date is after retinoid date and RAM date falls within entry and exit dates 
-RAM_meds<-RAM_meds[Date>=episode.start.retinoid-90 & Date>=entry_date-90 & Date<=exit_date,c("person_id","ATC.retinoid","Code","Date","episode.start.retinoid")]
+RAM_meds<-RAM_meds[Date>=episode.start.retinoid & Date>=entry_date-90 & Date<=exit_date,c("person_id","ATC.retinoid","Code","Date","episode.start.retinoid")]
 # Get RAM meds in Retinoid users 
 RAMs_in_studypop<-retinoid_study_population[,c("person_id","birth_date","entry_date","exit_date","fu_dur_days","age_at_entry_date","age_groups")][RAM_meds,on=.(person_id)]
 # Rename columns 
-setnames(RAMs_in_studypop,"Code","ATC.RAM")
-setnames(RAMs_in_studypop,"Date","Date.RAM")
+setnames(RAMs_in_studypop,old=c("Code","Date"),new=c("ATC.RAM","Date.RAM"))
 # Creates column with year month for prescription 
 setDT(RAMs_in_studypop)[, rx_year_month:=format(as.Date(Date.RAM), "%Y-%m")]
 # Create column for pre and post periods per DAP
@@ -98,6 +102,31 @@ RAM_record_counts_per_indication_psoriasis<-RAM_record_counts_per_indication1[in
 RAM_record_counts_per_indication_acne<-RAM_record_counts_per_indication1[indication=="acne",]
 RAM_record_counts_per_indication_dermatitis<-RAM_record_counts_per_indication1[indication=="dermatitis",]
 
-saveRDS(RAM_record_counts_per_indication_psoriasis, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_user_counts_psoriasis.rds")) 
-saveRDS(RAM_record_counts_per_indication_acne, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_user_counts_acne.rds")) 
-saveRDS(RAM_record_counts_per_indication_dermatitis, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_user_counts_dermatitis.rds")) 
+saveRDS(RAM_record_counts_per_indication_psoriasis, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_record_counts_psoriasis.rds")) 
+saveRDS(RAM_record_counts_per_indication_acne, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_record_counts_acne.rds")) 
+saveRDS(RAM_record_counts_per_indication_dermatitis, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_record_counts_dermatitis.rds")) 
+
+
+
+# Count incidence by indication, month, year, period - PER USER
+##### per indication #####
+RAM_data_per_indication_all_unique<-unique(RAM_data_per_indication_all,by=c("person_id", "indication"))
+# Count per year month ATC code 
+RAM_record_counts_per_indication_unique<-RAM_data_per_indication_all_unique[,.N, by = .(ATC.RAM,indication,period)]
+# Change table format form long to wide
+RAM_record_counts_per_indication1_unique<-dcast(RAM_record_counts_per_indication, ATC.RAM+indication~period, value.var = "N")
+
+if("pre"%!in%colnames(RAM_record_counts_per_indication1_unique)){RAM_record_counts_per_indication1_unique[,pre:=0]}
+if("post"%!in%colnames(RAM_record_counts_per_indication1_unique)){RAM_record_counts_per_indication1_unique}
+
+RAM_record_counts_per_indication1_unique[is.na(post),post:=0][is.na(pre),pre:=0]
+# Rearrange columns
+setcolorder(RAM_record_counts_per_indication1_unique,c("ATC.RAM","indication","pre","post"))
+
+RAM_user_counts_per_indication_psoriasis<-RAM_record_counts_per_indication1_unique[indication=="psoriasis",]
+RAM_user_counts_per_indication_acne<-RAM_record_counts_per_indication1_unique[indication=="acne",]
+RAM_user_counts_per_indication_dermatitis<-RAM_record_counts_per_indication1_unique[indication=="dermatitis",]
+
+saveRDS(RAM_user_counts_per_indication_psoriasis, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_user_counts_psoriasis.rds")) 
+saveRDS(RAM_user_counts_per_indication_acne, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_user_counts_acne.rds")) 
+saveRDS(RAM_user_counts_per_indication_dermatitis, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_user_counts_dermatitis.rds")) 

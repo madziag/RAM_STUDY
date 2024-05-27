@@ -1,36 +1,3 @@
-# Psoriasis D05BB02
-psoriasis_codes<-c("D05AC01","D05AD02","D05BA02","D05BX51",
-                   "D07AB01","D07AB02","D07AB03","D07AB04","D07AB05","D07AB06","D07AB07","D07AB08","D07AB09","D07AB10","D07AB11","D07AB19","D07AB21","D07AB30",
-                   "D07AC01","D07AC02","D07AC03","D07AC04","D07AC05","D07AC06","D07AC07","D07AC08","D07AC09","D07AC10","D07AC11","D07AC12","D07AC13","D07AC14","D07AC15","D07AC16","D07AC17","D07AC18","D07AC19","D07AC21",
-                   "D07AD01","D07AD02",
-                   "D11AH01","D11AH02",
-                   "L04AA32",
-                   "L04AB01","L04AB02","L04AB04","L04AB05",
-                   "L04AC05","L04AC10","L04AC12","L04AC13","L04AC16","L04AC17",
-                   "L04AD01",
-                   "L04AX07")
-# Acne D10BA01
-acne_codes<-c("A11CA01",
-              "D07AA01",
-              "D07AB19",
-              "D10AA01","D10AA02","D10AA03",
-              "D10AE01",
-              "D10AF01","D10AF02","D10AF51","D10AF52",
-              "H02AA01","H02AA02","H02AA03",
-              "H02AB01","H02AB02","H02AB03","H02AB04","H02AB05","H02AB08","H02AB09","H02AB10","H02AB11","H02AB13","H02AB14","H02AB15","H02AB17",
-              "J01AA07","J01AA08",
-              "J01FA01","J01FA10",
-              "S01AA17","S01AA26")
-
-
-# Dermatitis/Eczema D11AH04
-dermatitis_codes<-c("D07AB01","D07AB02","D07AB03","D07AB04","D07AB05","D07AB06","D07AB07","D07AB08","D07AB09","D07AB10","D07AB11","D07AB19","D07AB21","D07AB30",
-                    "D11AH01","D11AH02",
-                    "H02AB06","H02AB07",
-                    "L04AD01",
-                    "L04AX01","L04AX03")
-
-
 contraindicated_codes<-c("H02AB02","L04AX30", "A11CA01", "J01AA07")
 
 teratogenic_codes<-c("L04AA32","L04AX01","L04AX07","D05BA02","L04AX03","A11CA01","J01AA07","J01FA01", "J01FA10","L04AD01", "L04AB01","L04AB02","L04AC05","L04AC10","L04AC13","L04AC12","L04AC16","L04AC17")

@@ -33,7 +33,7 @@ for(pop in 1:length(populations)){
     source(paste0(pre_dir, "counts/retinoid_incidence_prevalence_discontinuation.R"))
     # Creates RAM treatment episodes in Retinoid Users 
     source(paste0(pre_dir, "treatmentepisodes/RAM_treatment_episodes.R"))
-    # Counts of prevalence, incidence, discontinuation - medicines use
+    # Counts of prevalence, incidence, discontinuation - alternative medicines use
     source(paste0(pre_dir, "counts/RAM_incidence_prevalence_discontinuation.R"))
     # Counts of switchers and general concomitance 
     source(paste0(pre_dir, "counts/RAM_switching.R"))
@@ -44,13 +44,13 @@ for(pop in 1:length(populations)){
     # Counts concomitance: teratogenic 
     source(paste0(pre_dir, "counts/RAM_teratogenic.R"))
     # Counts by indication
-    source(paste0(pre_dir,"counts/counts_by_indication.R"))
+    source(paste0(pre_dir, "counts/counts_by_indication.R"))
     # Creates baseline tables #
-    source(paste0(pre_dir,"baseline/baseline_tables.R"))
+    source(paste0(pre_dir, "baseline/baseline_tables.R"))
     # general counts 
     source(paste0(pre_dir,"counts/IndividualRAMCounts.R"))
     # flow chart 
-    source(paste0(pre_dir, "flowchart.R"))
+    source(paste0(pre_dir,"flowchart.R"))
     #source(paste0(pre_dir, "plots_mask.R"))
     # Converts all .rds files into .csv or .xlsx (indicated by user)
     #source(paste0(pre_dir, "write_output.R"))

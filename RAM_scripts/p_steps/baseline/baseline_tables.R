@@ -1,6 +1,9 @@
-## Retinoid Incidence Data ## 
-retinoid_incidence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_incidence_data.rds")))
-setnames(retinoid_incidence_data,"episode.start","episode.start.retinoid")
+# Read in retinoid prevalence data
+retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
+# Rename episode start column
+setnames(retinoid_prevalence_data, old=c("episode.start", "episode.day"), new=c("episode.start.retinoid", "episode.day.retinoid")) 
+# Get first retinoid use in entry into study (could be incidence or prevalent use)
+retinoid_prevalence_data<-unique(retinoid_prevalence_data, by=c("person_id"))
 
 # Load Retinoid Study Population (already loaded)
 # Correct date format
@@ -13,11 +16,13 @@ retinoid_study_population[,age_groups:=ifelse(retinoid_study_population[,age_at_
                                               ifelse(retinoid_study_population[,age_at_entry_date>=21&age_at_entry_date<31],"21-30.99",
                                                      ifelse(retinoid_study_population[,age_at_entry_date>=31&age_at_entry_date<41],"31-40.99",
                                                             ifelse(retinoid_study_population[,age_at_entry_date>=41&age_at_entry_date<56],"41-55.99","Not in range"))))]
+
 # Load RAM medications 
 RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
-RAM_meds<-retinoid_incidence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_meds,on=.(person_id)]
+RAM_meds<-retinoid_prevalence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_meds,on=.(person_id)]
+
 # Keep records where RAM date is after retinoid date and RAM date falls within entry and exit dates 
-RAM_meds<-RAM_meds[Date>=episode.start.retinoid-90 & Date>=entry_date-90 & Date<=exit_date,c("person_id","ATC.retinoid","Code","Date","episode.start.retinoid")]
+RAM_meds<-RAM_meds[Date>=episode.start.retinoid & Date>=entry_date-90 & Date<=exit_date,c("person_id","ATC.retinoid","Code","Date","episode.start.retinoid")]
 # Get RAM meds in Retinoid users 
 RAM_meds_in_retinoid_users<-retinoid_study_population[,c("person_id","birth_date","entry_date","exit_date","fu_dur_days","age_at_entry_date","age_groups")][RAM_meds,on=.(person_id)]
 # Create subsets for each of the indications - based on the Retinoid not RAM

@@ -13,11 +13,17 @@ setnames(RAM_prevalence_data, old = c("episode.start","episode.end"), new = c("e
 
 ## RAM prevalence counts
 RAM_prevalence_rates<-as.data.table(readRDS(paste0(objective1_dir, "/", pop_prefix, "_RAM_prevalence_counts.rds")))
-## Retinoid incidence Data ## 
-retinoid_incidence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_incidence_data.rds")))
-setnames(retinoid_incidence_data,"episode.start","episode.start.retinoid")
-# Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-RAM_prevalence_data<-retinoid_incidence_data[,c("person_id","ATC.retinoid")][RAM_prevalence_data,on=.(person_id)]
+
+# Read in retinoid prevalence data
+retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
+# Rename episode start column
+setnames(retinoid_prevalence_data, old=c("episode.start", "episode.day"), new=c("episode.start.retinoid", "episode.day.retinoid")) 
+# Get first retinoid use in entry into study (could be incidence or prevalent use)
+retinoid_prevalence_data<-unique(retinoid_prevalence_data, by=c("person_id"))
+
+# Merge these prevalent retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
+RAM_prevalence_data<-retinoid_prevalence_data[,c("person_id","ATC.retinoid","episode.day.retinoid")][RAM_prevalence_data,on=.(person_id)]
+
 # Create column for indication 
 RAM_prevalence_data[ATC.retinoid=="D05BB02",indication:="psoriasis"]
 RAM_prevalence_data[ATC.retinoid=="D10BA01",indication:="acne"]
@@ -79,7 +85,8 @@ setnames(RAM_incidence_data, old = c("episode.start","episode.end"), new = c("ep
 RAM_incidence_rates<-as.data.table(readRDS(paste0(objective1_dir, "/", pop_prefix, "_RAM_incidence_counts.rds")))
 
 # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-RAM_incidence_data<-retinoid_incidence_data[,c("person_id","ATC.retinoid")][RAM_incidence_data,on=.(person_id)]
+RAM_incidence_data<-retinoid_prevalence_data[,c("person_id","ATC.retinoid")][RAM_incidence_data,on=.(person_id)]
+
 # Create column for indication 
 RAM_incidence_data[ATC.retinoid=="D05BB02",indication:="psoriasis"]
 RAM_incidence_data[ATC.retinoid=="D10BA01",indication:="acne"]
@@ -141,7 +148,7 @@ setnames(RAM_discontinued_data, old = c("episode.start","episode.end"), new = c(
 RAM_discontinued_rates<-as.data.table(readRDS(paste0(objective2_dir, "/", pop_prefix, "_RAM_discontinued_counts.rds")))
 
 # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-RAM_discontinued_data<-retinoid_incidence_data[,c("person_id","ATC.retinoid")][RAM_discontinued_data,on=.(person_id)]
+RAM_discontinued_data<-retinoid_prevalence_data[,c("person_id","ATC.retinoid")][RAM_discontinued_data,on=.(person_id)]
 # Create column for indication 
 RAM_discontinued_data[ATC.retinoid=="D05BB02",indication:="psoriasis"]
 RAM_discontinued_data[ATC.retinoid=="D10BA01",indication:="acne"]
@@ -201,7 +208,7 @@ RAM_switcher_data[,episode.start.RAM:=as.IDate(episode.start.RAM)][,episode.end.
 RAM_switcher_rates1<-as.data.table(readRDS(paste0(objective2_dir, "/", pop_prefix, "_RAM_switcher_1_counts.rds")))
 
 # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-RAM_switcher_data<-retinoid_incidence_data[,c("person_id","ATC.retinoid")][RAM_switcher_data,on=.(person_id)]
+RAM_switcher_data<-retinoid_prevalence_data[,c("person_id","ATC.retinoid")][RAM_switcher_data,on=.(person_id)]
 # Create column for indication 
 RAM_switcher_data[ATC.retinoid=="D05BB02",indication:="psoriasis"]
 RAM_switcher_data[ATC.retinoid=="D10BA01",indication:="acne"]
@@ -269,7 +276,7 @@ RAM_concomit_rates[is.na(RAM_concomit_rates[,N]), N:=0]
 RAM_concomit_rates<-within(RAM_concomit_rates, YM<- sprintf("%d-%02d", year, month))
 
 # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-RAM_concomit_data<-retinoid_incidence_data[,c("person_id","ATC.retinoid")][RAM_concomit_data,on=.(person_id)]
+RAM_concomit_data<-retinoid_prevalence_data[,c("person_id","ATC.retinoid")][RAM_concomit_data,on=.(person_id)]
 # Create column for indication 
 RAM_concomit_data[ATC.retinoid=="D05BB02",indication:="psoriasis"]
 RAM_concomit_data[ATC.retinoid=="D10BA01",indication:="acne"]
@@ -386,7 +393,7 @@ RAM_teratogenic_data<-unique(RAM_teratogenic_data)
 RAM_teratogenic_counts<-as.data.table(readRDS(paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_record.rds")))
 
 # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-RAM_teratogenic_data<-retinoid_incidence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_teratogenic_data,on=.(person_id)]
+RAM_teratogenic_data<-retinoid_prevalence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_teratogenic_data,on=.(person_id)]
 RAM_teratogenic_data<-RAM_teratogenic_data[Date.RAM>=episode.start.retinoid,]
 # Create column for indication 
 RAM_teratogenic_data[ATC.retinoid=="D05BB02",indication:="psoriasis"]

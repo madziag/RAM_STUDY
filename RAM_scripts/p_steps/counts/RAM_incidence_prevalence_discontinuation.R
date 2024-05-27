@@ -31,23 +31,11 @@
 #############################################################################################
 # Loads denominator and empty df
 source(paste0(pre_dir,"denominators/load_denominator.R"))
-# Load RAM codes per indications
-source(paste0(pre_dir,"parameters/RAM_codes_per_indication.R"))
+
 # Loads RAM treatment episodes
 RAM_episodes<-readRDS(paste0(RAM_treatment_episodes, pop_prefix, "_RAM_CMA_treatment_episodes.rds"))
-# Merges with study population to get birth_date, entry and exit dates
-RAM_episodes<-merge(RAM_episodes, retinoid_study_population[,c("person_id", "birth_date")], by = "person_id")
-
-# We need to exclude any RAMs that do not occur after a Retinoid 
-# Load Incident Retinoid Treatment Episodes
-retinoid_incidence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_incidence_data.rds")))
-setnames(retinoid_incidence_data,"episode.start","episode.start.retinoid")
-# Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-RAM_episodes<-retinoid_incidence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_episodes,on=.(person_id)]
-# Compare dates and any RAMs whose end date does not overlap a Retinoid episode start date (incidence) is removed 
-RAM_episodes<-RAM_episodes[episode.start>=episode.start.retinoid,][,c("ATC.retinoid","episode.start.retinoid"):=NULL]
-# Changes columns to correct data type/add column that indicates rownumber
-RAM_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
+# Changes columns to correct data type/add column that indicates row number
+RAM_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)][,birth_date:=as.IDate(birth_date)]
 # Add row numbers to each row 
 RAM_episodes[,rowID:=.I]
 # Creates a version of df_episodes for incidence counts (we do not need an expanded df for incidence counts)

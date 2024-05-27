@@ -35,7 +35,7 @@ retinoid_discontinued_counts<-as.data.table(readRDS(paste0(medicines_counts_dir,
 
 
 ### Data Cleaning 
-## RAM Incident data
+## RAM prevalent data
 # Drop unneeded columns
 RAM_prevalence_data<-RAM_prevalence_data[,c("person_id", "episode.start", "episode.end",  "ATC.RAM", "birth_date", "entry_date", "exit_date")]
 # Change date format

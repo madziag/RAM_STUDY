@@ -1,35 +1,47 @@
-
 #Author: Ema Alsina MSc.
 #email: e.m.alsina-2@umcutrecht.nl
 #Organisation: UMC Utrecht, Utrecht, The Netherlands
 #Date: 18/12/2021
 
-# This script does two things:
-# 1. it loads retinoid concept set data sets created by running "to_run_source_pop_counts.R", for separate subpopulations and regions if necessary.
-# It then applys createDOT or a fixed duration value to create an estimated end date of treatment for every record
-# 2. It creates a new data frame where each row is not a record, but instead a treatment episode.
+# Script Function:  
+# Creates retinoid treatment episodes: 
+## 1. Loads retinoid meds data created by running monthly_counts_ATC.R (per region/subpop for BIFAP)
+## 2. Applies duration value as defined by DAP in DAP_specific_assumed_durations.R
+## 3. Creates data where each row is a treatment episode - created for each ATC code and later joined into one data frame, with column for ATC code each row pertains to. 
 
-#INPUTS 
-#Retinoid.rds
+# Input: 
+## Retinoid meds data created by monthly_counts_ATC.R
 
-# Reads in Retinoid medication data
-retinoid_meds<-readRDS(paste0(medications_pop, pop_prefix, "_Retinoid_MEDS.rds"))
+# Criteria for what treatment episodes are kept or discarded 
+## Treatment episode end has to be after study entry date - 90 
+## If treatment episode end is after exit study date, then change treatment episode end to exit study date 
+## If treatment episode start is after exit study date, then exclude episode. 
+## Treatment episode end has to come after treatment episode start
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+# Read in retinoid meds data
+retinoid_meds<-as.data.table(readRDS(paste0(medications_pop, pop_prefix, "_Retinoid_MEDS.rds")))
+# Rename ATC column 
 setnames(retinoid_meds,"Code","ATC.retinoid")
-
+# Get levels of ATC codes 
 my_name<-levels(factor(retinoid_meds$ATC.retinoid))
+# Split data according to these levels 
 split_data<-split(retinoid_meds, retinoid_meds$ATC.retinoid)
 
-# Loops over each retinoid ATC codes -> creates treatment episodes for each unique code 
+
+# Create treatment episode for each ATC code
 for (i in 1:length(split_data)){
-  
+  # Get data for current ATC code i
   cma_data<-split_data[[i]]
   # Get ATC code
-  ATC_code<-unique(cma_data$ATC.retinoid)
-  # assumed duration column values are assigned dependent on user input DAP_specific_DOT
+  ATC_code<-unique(cma_data[,ATC.retinoid])
+  # Add durations to the data where duration is missing (according to DAP definitions if DAP_specific_DOT = TRUE)
   if(DAP_specific_DOT==T){source(paste0(pre_dir, "parameters/DAP_specific_assumed_durations.R"))}else{cma_data[,assumed_duration:=30]}
-  
+  # Change date format
   cma_data$Date<-as.Date(cma_data$Date, format="%Y%m%d")
-  # Creates treatment episodes
+  # Create treatment episodes
   treat_episode<-compute.treatment.episodes(data= cma_data,
                                             ID.colname = "person_id",
                                             event.date.colname = "Date",
@@ -59,12 +71,12 @@ for (i in 1:length(split_data)){
                                             return.data.table = FALSE
   ) 
   
-  # Converts treatment episode to data table
+  # Convert treatment episode to data table
   treat_episode<-as.data.table(treat_episode)
-  # Converts date values to IDate format
+  # Convert date values to IDate format
   treat_episode[,episode.start:= as.IDate(episode.start,"%Y%m%d")][,episode.end:= as.IDate(episode.end,"%Y%m%d")]
-  # Merges with study population to get entry and exit dates (study population has been loaded in the wrapper script)
-  treat_episode1<-as.data.table(merge(treat_episode, retinoid_study_population[,c("person_id", "entry_date","exit_date")], by = "person_id"))
+  # Merge with study population to get entry and exit dates (study population has been loaded in the wrapper script)
+  treat_episode1<-as.data.table(merge(treat_episode, retinoid_study_population[,c("person_id","birth_date" ,"entry_date","exit_date")], by = "person_id"))
   # Exclude rows where episode.end is before entry.date-90
   # Therefore, keep records that have a episode.start < entry.date, unless the above exclusion criterion is met  
   treat_episode1<-treat_episode1[episode.end > entry_date - 90,]
@@ -84,20 +96,20 @@ for (i in 1:length(split_data)){
   }
 }
 
-# Binds all retinoidtreatment episodes to one
-# Gets a list of all files in treatment episode folder 
+# Bind all retinoid treatment episodes into one data frame
+## Get list of all retinoid files in treatment episodes folder 
 retinoid_episode_files<-list.files(retinoid_treatment_episodes, pattern="CMA")
+# Filter for subpop
 if(pop_prefix == "PC"){retinoid_episode_files<-retinoid_episode_files[!grepl("PC_HOSP", retinoid_episode_files)]}
 if(pop_prefix == "PC_HOSP"){retinoid_episode_files<-retinoid_episode_files[grepl("PC_HOSP", retinoid_episode_files)]}
-
-## Retinoid files 
+## Filter for retinoid files only
 retinoid_episode_files<-retinoid_episode_files[grepl(c("D05BB02|D11AH04|D10BA01"), retinoid_episode_files)]
 
-# Checks if any Retinoid treatment episodes in list
+# If any retinoids in the list: 
 if(length(retinoid_episode_files)>0){
-  # Binds all retinoid files 
+  # Binds all files into one
   retinoid_episodes<-rbindlist(lapply(paste0(retinoid_treatment_episodes, retinoid_episode_files), readRDS))
-  # Saves files: result is Retinoid treatment episodes (for all retinoid ATC codes - D05BB02|D11AH04|D10BA01)
+  # Saves back in treatment episode folder - result is one data frame with treatment episodes for all retinoid ATC's 
   if(nrow(retinoid_episodes>0)){saveRDS(retinoid_episodes, (paste0(retinoid_treatment_episodes, pop_prefix, "_Retinoid_CMA_treatment_episodes.rds")))}
 }
 
