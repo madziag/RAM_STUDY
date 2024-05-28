@@ -31,11 +31,13 @@
 #############################################################################################
 # Loads denominator and empty df
 source(paste0(pre_dir,"denominators/load_denominator.R"))
-
 # Loads RAM treatment episodes
 RAM_episodes<-readRDS(paste0(RAM_treatment_episodes, pop_prefix, "_RAM_CMA_treatment_episodes.rds"))
 # Changes columns to correct data type/add column that indicates row number
 RAM_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)][,birth_date:=as.IDate(birth_date)]
+# Retinoid prevalence data has already been loaded 
+# Merge RAM episodes with retinoid data 
+RAM_episodes<-merge(retinoid_prevalence_data[,c("person_id","episode.day.retinoid")],RAM_episodes,by="person_id")
 # Add row numbers to each row 
 RAM_episodes[,rowID:=.I]
 # Creates a version of df_episodes for incidence counts (we do not need an expanded df for incidence counts)
@@ -64,6 +66,9 @@ RAM_episodes_expanded[current_age >= 41 & current_age < 56, age_group:= "41-55.9
 ### Numerator = Number of female subjects in cohort with RAM episode overlapping the month by at least 1 day 
 # Removes any records where episode.day falls outside of entry & exit dates
 RAM_episodes_expanded<-RAM_episodes_expanded[episode.day>=entry_date & episode.day<=exit_date,]
+# Remove any records where episode day is before first record of Retinoid use (prevalence)
+RAM_episodes_expanded<-RAM_episodes_expanded[episode.day>=episode.day.retinoid]
+
 # Removes duplicates - keeps only the earliest record of person_id, year, month => we get the first record of person for every month in every year
 # Creates data where each row represents a month of treatment within the treatment episode (patient is represented once per month)
 # Person is counted only once per year-month regardless of ATC code
@@ -163,6 +168,8 @@ RAM_incidence<-RAM_incidence[incident_user==1,]
 RAM_incidence[,year:=year(episode.start)][,month:=month(episode.start)]
 # If episode start falls outside of patients entry and exit into study dates, then remove it
 RAM_incidence<-RAM_incidence[episode.start>= entry_date & episode.start<=exit_date,]
+# Remove any records where episode day is before first record of Retinoid use (prevalence)
+RAM_incidence<-RAM_incidence[episode.start>=episode.day.retinoid]
 # Removes unnecessary columns
 RAM_incidence<-RAM_incidence[,-c("rowID", "previous.episode.end", "incident_user")]
 # For indication counts 
@@ -260,6 +267,8 @@ RAM_discontinued<-RAM_discontinued[discontinued == 1,]
 RAM_discontinued[,year:=year(episode.end)][,month:=month(episode.end)]
 # Removes all episode ends that fall outside entry_date and exit_date
 RAM_discontinued<-RAM_discontinued[episode.end>entry_date & episode.end<=exit_date,]
+# Remove any records where episode day is before first record of Retinoid use (prevalence)
+RAM_incidence<-RAM_incidence[episode.end>=episode.day.retinoid]
 # Removes unnecessary columns
 RAM_discontinued<-RAM_discontinued[,-c("rowID", "next.episode.start", "discontinued")]
 # For indication counts 

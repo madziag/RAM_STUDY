@@ -29,14 +29,13 @@ setnames(RAM_meds,"Code","ATC.RAM")
 # Read in retinoid incidence data
 retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
 # Rename episode start column
-setnames(retinoid_prevalence_data,"episode.start","episode.start.retinoid") 
+setnames(retinoid_prevalence_data, old=c("episode.day","episode.start"), new=c("episode.day.retinoid", "episode.start.retinoid")) 
 # Get first retinoid use in entry into study (could be incidence or prevalent use)
 retinoid_prevalence_data<-unique(retinoid_prevalence_data, by=c("person_id"))
 # Merge retinoid prevalence data with RAM meds
 # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-RAM_meds<-merge(retinoid_prevalence_data[,c("person_id","episode.start.retinoid")],RAM_meds,by="person_id")
-# Keep RAM_meds that occurred after the start of a Retinoid 
-RAM_meds<-RAM_meds[Date>=episode.start.retinoid,]
+RAM_meds<-merge(retinoid_prevalence_data[,c("person_id", "episode.start.retinoid", "episode.day.retinoid")],RAM_meds,by="person_id")
+# To make treatment episodes, we use all the RAM's regardless of whether they appear before Retinoid or not. 
 # Get levels of ATC codes 
 my_name<-levels(factor(RAM_meds$ATC.RAM))
 # Split data according to these levels 
@@ -126,8 +125,11 @@ if(length(RAM_episode_files)>0){
 ####### Flowchart #######
 #########################
 # Counts of all RAM Meds in retinoid users 
-RAM_flowchart_allRAM_users<-nrow(unique(RAM_meds,by="person_id"))
-RAM_flowchart_allRAM_records<-nrow(RAM_meds)
+# First get all RAMs only after first retinoid exposure
+
+RAM_meds_after_retinoid<-RAM_meds[Date>=episode.day.retinoid,]
+RAM_flowchart_allRAM_users<-nrow(unique(RAM_meds_after_retinoid,by="person_id"))
+RAM_flowchart_allRAM_records<-nrow(RAM_meds_after_retinoid)
 #########################
 ####### Flowchart #######
 #########################
