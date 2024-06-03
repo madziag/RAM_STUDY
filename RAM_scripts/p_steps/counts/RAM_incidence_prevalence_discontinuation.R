@@ -31,14 +31,13 @@
 #############################################################################################
 # Loads denominator and empty df
 source(paste0(pre_dir,"denominators/load_denominator.R"))
-# Load RAM codes per indications
-source(paste0(pre_dir,"parameters/RAM_codes_per_indication.R"))
 # Loads RAM treatment episodes
 RAM_episodes<-readRDS(paste0(RAM_treatment_episodes, pop_prefix, "_RAM_CMA_treatment_episodes.rds"))
-# Merges with study population to get birth_date, entry and exit dates
-RAM_episodes<-merge(RAM_episodes, retinoid_study_population[,c("person_id", "birth_date", "entry_date","exit_date")], by = "person_id")
-# Changes columns to correct data type/add column that indicates rownumber
-RAM_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
+# Changes columns to correct data type/add column that indicates row number
+RAM_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)][,birth_date:=as.IDate(birth_date)]
+# Retinoid prevalence data has already been loaded 
+# Merge RAM episodes with retinoid data 
+RAM_episodes<-merge(retinoid_prevalence_data[,c("person_id","episode.day.retinoid")],RAM_episodes,by="person_id")
 # Add row numbers to each row 
 RAM_episodes[,rowID:=.I]
 # Creates a version of df_episodes for incidence counts (we do not need an expanded df for incidence counts)
@@ -65,18 +64,20 @@ RAM_episodes_expanded[current_age >= 31 & current_age < 41, age_group:= "31-40.9
 RAM_episodes_expanded[current_age >= 41 & current_age < 56, age_group:= "41-55.99"]
 
 ### Numerator = Number of female subjects in cohort with RAM episode overlapping the month by at least 1 day 
+# Removes any records where episode.day falls outside of entry & exit dates
+RAM_episodes_expanded<-RAM_episodes_expanded[episode.day>=entry_date & episode.day<=exit_date,]
+# Remove any records where episode day is before first record of Retinoid use (prevalence)
+RAM_episodes_expanded<-RAM_episodes_expanded[episode.day>=episode.day.retinoid]
+
 # Removes duplicates - keeps only the earliest record of person_id, year, month => we get the first record of person for every month in every year
 # Creates data where each row represents a month of treatment within the treatment episode (patient is represented once per month)
 # Person is counted only once per year-month regardless of ATC code
-RAM_prevalence<-RAM_episodes_expanded[!duplicated(RAM_episodes_expanded[,c("person_id", "episode.start", "year", "month")])]
-# Removes any records where episode.day falls outside of entry & exit dates
-RAM_prevalence<-RAM_prevalence[episode.day>=entry_date & episode.day<=exit_date,]
+RAM_prevalence<-RAM_episodes_expanded[!duplicated(RAM_episodes_expanded[,c("person_id","episode.start","year","month")])]
+
 # Removes unnecessary columns
 RAM_prevalence<-RAM_prevalence[,-c("rowID","idnum","episode.day")]
 # Reorder columns
-setcolorder(RAM_prevalence, c("person_id", "episode.ID" , "episode.start","end.episode.gap.days","episode.duration","episode.end","ATC","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
-#flowchart
-if(length(unique(RAM_prevalence$person_id))>0){RAM_flowchart_prevalence<-length(unique(RAM_prevalence$person_id))}else{RAM_flowchart_prevalence<-0}
+setcolorder(RAM_prevalence, c("person_id", "episode.ID" , "episode.start","end.episode.gap.days","episode.duration","episode.end","ATC.RAM","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
 # Prevalence Counts
 RAM_prevalence_counts<-RAM_prevalence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -138,64 +139,6 @@ for(group in 1:length(unique(prevalence_by_age$age_group))){
   saveRDS(age_group_prevalence_count, (paste0(objective1_strat_dir,"/", pop_prefix,"_RAM_prevalence_counts_", unique(prevalence_by_age$age_group)[group],"_age_group.rds")))
 }
 
-################ Prevalence by Indication ###################  
-# Person is counted once per year-month, ATC type 
-RAM_prevalence_per_indication<-RAM_episodes_expanded[!duplicated(RAM_episodes_expanded[,c("person_id", "episode.start", "year", "month", "ATC")])]
-# Removes any records where episode.day falls outside of entry & exit dates
-RAM_prevalence_per_indication<-RAM_prevalence_per_indication[episode.day>=entry_date & episode.day<=exit_date,]
-
-# Create subsets for each indication -> some codes can be for different indications
-RAM_prevalence_per_indication_psoriasis<-RAM_prevalence_per_indication[ATC%in%psoriasis_codes,][,indication:="psoriasis"]
-RAM_prevalence_per_indication_acne<-RAM_prevalence_per_indication[ATC%in%acne_codes,][,indication:="acne"]
-RAM_prevalence_per_indication_dermatitis<-RAM_prevalence_per_indication[ATC%in%dermatitis_codes,][,indication:="dermatitis"]
-
-RAM_prevalence_all_ind<-rbindlist(list(RAM_prevalence_per_indication_psoriasis,RAM_prevalence_per_indication_acne,RAM_prevalence_per_indication_dermatitis))
-# To be counted once per person, Year-month, indication
-RAM_prevalence_all_ind<-unique(RAM_prevalence_all_ind,by=c("person_id", "year", "month","indication"))
-#flowchart
-if(length(unique(RAM_prevalence_per_indication_psoriasis$person_id))>0){RAM_flowchart_prevalence_psoriasis<-length(unique(RAM_prevalence_per_indication_psoriasis$person_id))}else{RAM_flowchart_prevalence_psoriasis<-0}
-if(length(unique(RAM_prevalence_per_indication_acne$person_id))>0){RAM_flowchart_prevalence_acne<-length(unique(RAM_prevalence_per_indication_acne$person_id))}else{RAM_flowchart_prevalence_acne<-0}
-if(length(unique(RAM_prevalence_per_indication_dermatitis$person_id))>0){RAM_flowchart_prevalence_dermatitis<-length(unique(RAM_prevalence_per_indication_dermatitis$person_id))}else{RAM_flowchart_prevalence_dermatitis<-0}
-#cleanup 
-rm(RAM_prevalence_per_indication_psoriasis,RAM_prevalence_per_indication_acne,RAM_prevalence_per_indication_dermatitis)
-
-# Count incidence by age, month, year
-prevalence_by_indication<-RAM_prevalence_all_ind[,.N, by = .(year,month, indication)]
-
-for(group in 1:length(unique(prevalence_by_indication$indication))){
-  # Create a subset of age group
-  each_group<-prevalence_by_indication[indication==unique(prevalence_by_indication$indication)[group]]
-  # Merge with empty df (for counts that do not have counts for all months and years of study)
-  each_group<-as.data.table(merge(x=empty_df,y=each_group,by=c("year","month"),all.x=TRUE))
-  # Fills in missing values with 0
-  each_group[is.na(N),N:=0][is.na(indication),indication:=unique(prevalence_by_indication$indication)[group]]
-  # Adjust for PHARMO
-  if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-  # Create YM variable 
-  each_group<-within(each_group,YM<-sprintf("%d-%02d",year,month))
-  
-  # Prepare denominator
-  prevalence_count_min <- RAM_prevalence_rates[,c("YM","N")]
-  setnames(prevalence_count_min,"N","Freq")
-  
-  # Merge age-group subset count with all prevalent counts 
-  indication_prevalence_count<-merge(x=each_group,y=prevalence_count_min,by=c("YM"),all.x=TRUE)
-  # Masking set at 0
-  indication_prevalence_count[,masked:=0]
-  # If masking applies
-  if(mask==T){indication_prevalence_count[N>0&N<5,N:=5][Freq>0&Freq<5,Freq:=5][,masked:=1]}
-  # Calculates rates
-  indication_prevalence_count<-indication_prevalence_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
-  # Drop columns you don't need 
-  indication_prevalence_count<-indication_prevalence_count[,c("YM","N","Freq","rates","masked")]
-  
-  # Save files in medicine counts folder
-  saveRDS(indication_prevalence_count, (paste0(objective1_strat_dir,"/", pop_prefix,"_RAM_prevalence_counts_", unique(prevalence_by_indication$indication)[group],"_indication_group.rds")))
-  
-}
-
-
-
 ##################################################################################################
 ################################## Calculates Incidence #########################################
 ##################################################################################################
@@ -225,14 +168,14 @@ RAM_incidence<-RAM_incidence[incident_user==1,]
 RAM_incidence[,year:=year(episode.start)][,month:=month(episode.start)]
 # If episode start falls outside of patients entry and exit into study dates, then remove it
 RAM_incidence<-RAM_incidence[episode.start>= entry_date & episode.start<=exit_date,]
+# Remove any records where episode day is before first record of Retinoid use (prevalence)
+RAM_incidence<-RAM_incidence[episode.start>=episode.day.retinoid]
 # Removes unnecessary columns
 RAM_incidence<-RAM_incidence[,-c("rowID", "previous.episode.end", "incident_user")]
 # For indication counts 
 RAM_incidence_per_indication<-RAM_incidence
 # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
 RAM_incidence<-unique(RAM_incidence, by=c("person_id", "year", "month"))
-#flowchart
-if(RAM_flowchart_incidence<-length(unique(RAM_incidence$person_id))>0){RAM_flowchart_incidence<-length(unique(RAM_incidence$person_id))}else{RAM_flowchart_incidence<-0}
 # Incidence Counts
 RAM_incidence_counts<-RAM_incidence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -293,62 +236,6 @@ for(group in 1:length(unique(incidence_by_age$age_group))){
   saveRDS(age_group_incidence_count, (paste0(objective1_strat_dir,"/", pop_prefix,"_RAM_incidence_counts_", unique(incidence_by_age$age_group)[group],"_age_group.rds")))
 }
 
-
-################ Incidence by Indication ###################  
-
-# Removes any records where episode.day falls outside of entry & exit dates
-RAM_incidence_per_indication<-RAM_incidence_per_indication[episode.start>=entry_date & episode.start<=exit_date,]
-# Create subsets for each indication 
-RAM_incidence_per_indication_psoriasis<-RAM_incidence_per_indication[ATC%in%psoriasis_codes,][,indication:="psoriasis"]
-RAM_incidence_per_indication_acne<-RAM_incidence_per_indication[ATC%in%acne_codes,][,indication:="acne"]
-RAM_incidence_per_indication_dermatitis<-RAM_incidence_per_indication[ATC%in%dermatitis_codes,][,indication:="dermatitis"]
-
-RAM_incidence_all_ind<-rbindlist(list(RAM_incidence_per_indication_psoriasis,RAM_incidence_per_indication_acne,RAM_incidence_per_indication_dermatitis))
-# To be counted once per person, Year-month, indication
-RAM_incidence_all_ind<-unique(RAM_incidence_all_ind,by=c("person_id", "year", "month","indication"))
-#flowchart
-if(length(unique(RAM_incidence_per_indication_psoriasis$person_id))>0){RAM_flowchart_incidence_psoriasis<-length(unique(RAM_incidence_per_indication_psoriasis$person_id))}else{RAM_flowchart_incidence_psoriasis<-0}
-if(length(unique(RAM_incidence_per_indication_acne$person_id))>0){RAM_flowchart_incidence_acne<-length(unique(RAM_incidence_per_indication_acne$person_id))}else{RAM_flowchart_incidence_acne<-0}
-if(length(unique(RAM_incidence_per_indication_dermatitis$person_id))>0){RAM_flowchart_incidence_dermatitis<-length(unique(RAM_incidence_per_indication_dermatitis$person_id))}else{RAM_flowchart_incidence_dermatitis<-0}
-# cleanup
-rm(RAM_incidence_per_indication_psoriasis,RAM_incidence_per_indication_acne,RAM_incidence_per_indication_dermatitis)
-
-# Count incidence by age, month, year
-incidence_by_indication<-RAM_incidence_all_ind[,.N, by = .(year,month, indication)]
-
-for(group in 1:length(unique(incidence_by_indication$indication))){
-  # Create a subset of age group
-  each_group<-incidence_by_indication[indication==unique(incidence_by_indication$indication)[group]]
-  # Merge with empty df (for counts that do not have counts for all months and years of study)
-  each_group<-as.data.table(merge(x=empty_df,y=each_group,by=c("year","month"),all.x=TRUE))
-  # Fills in missing values with 0
-  each_group[is.na(N),N:=0][is.na(indication),indication:=unique(incidence_by_indication$indication)[group]]
-  # Adjust for PHARMO
-  if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-  # Create YM variable 
-  each_group<-within(each_group,YM<-sprintf("%d-%02d",year,month))
-  
-  # Prepare denominator
-  incidence_count_min <- RAM_incidence_rates[,c("YM","N")]
-  setnames(incidence_count_min,"N","Freq")
-  
-  # Merge age-group subset count with all prevalent counts 
-  indication_incidence_count<-merge(x=each_group,y=incidence_count_min,by=c("YM"),all.x=TRUE)
-  # Masking set at 0
-  indication_incidence_count[,masked:=0]
-  # If masking applies
-  if(mask==T){indication_incidence_count[N>0&N<5,N:=5][Freq>0&Freq<5,Freq:=5][,masked:=1]}
-  # Calculates rates
-  indication_incidence_count<-indication_incidence_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
-  # Drop columns you don't need 
-  indication_incidence_count<-indication_incidence_count[,c("YM","N","Freq","rates","masked")]
-  
-  # Save files in medicine counts folder
-  saveRDS(indication_incidence_count, (paste0(objective1_strat_dir,"/", pop_prefix,"_RAM_incidence_counts_", unique(incidence_by_indication$indication)[group],"_indication_group.rds")))
-  
-}
-
-
 ##################################################################################################
 ############################# Calculates Discontinuation #########################################
 ##################################################################################################
@@ -380,14 +267,14 @@ RAM_discontinued<-RAM_discontinued[discontinued == 1,]
 RAM_discontinued[,year:=year(episode.end)][,month:=month(episode.end)]
 # Removes all episode ends that fall outside entry_date and exit_date
 RAM_discontinued<-RAM_discontinued[episode.end>entry_date & episode.end<=exit_date,]
+# Remove any records where episode day is before first record of Retinoid use (prevalence)
+RAM_incidence<-RAM_incidence[episode.end>=episode.day.retinoid]
 # Removes unnecessary columns
 RAM_discontinued<-RAM_discontinued[,-c("rowID", "next.episode.start", "discontinued")]
 # For indication counts 
 RAM_discontinued_per_indication<-RAM_discontinued
 # Remove duplicates -> Patient is counted only 1x per month-year -ATC?
 RAM_discontinued<-unique(RAM_discontinued, by=c("person_id", "year", "month"))
-#flowchart
-if(length(unique(RAM_discontinued$person_id))){RAM_flowchart_discontinued<-length(unique(RAM_discontinued$person_id))}else{RAM_flowchart_discontinued<-0}
 # Performs discontinued counts 
 RAM_discontinued_counts<-RAM_discontinued[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -452,66 +339,8 @@ for(group in 1:length(unique(discontinued_by_age$age_group))){
   saveRDS(age_group_discontinued_count, (paste0(objective2_strat_dir,"/", pop_prefix,"_RAM_discontinued_counts_", unique(discontinued_by_age$age_group)[group],"_age_group.rds")))
 }
 
-
-
-################ Discontinued by Indication ###################  
-
-# Removes any records where episode.day falls outside of entry & exit dates
-RAM_discontinued_per_indication<-RAM_discontinued_per_indication[episode.end>=entry_date & episode.end<=exit_date,]
-# Create subsets for each indication 
-RAM_discontinued_per_indication_psoriasis<-RAM_discontinued_per_indication[ATC%in%psoriasis_codes,][,indication:="psoriasis"]
-RAM_discontinued_per_indication_acne<-RAM_discontinued_per_indication[ATC%in%acne_codes,][,indication:="acne"]
-RAM_discontinued_per_indication_dermatitis<-RAM_discontinued_per_indication[ATC%in%dermatitis_codes,][,indication:="dermatitis"]
-
-RAM_discontinued_all_ind<-rbindlist(list(RAM_discontinued_per_indication_psoriasis,RAM_discontinued_per_indication_acne,RAM_discontinued_per_indication_dermatitis))
-# To be counted once per person, Year-month, indication
-RAM_discontinued_all_ind<-unique(RAM_discontinued_all_ind,by=c("person_id", "year", "month","indication"))
-# flowchart
-if(length(unique(RAM_discontinued_per_indication_psoriasis$person_id))>0){RAM_flowchart_discontinued_psoriasis<-length(unique(RAM_discontinued_per_indication_psoriasis$person_id))}else{RAM_flowchart_discontinued_psoriasis<-0}
-if(length(unique(RAM_discontinued_per_indication_acne$person_id))>0){RAM_flowchart_discontinued_acne<-length(unique(RAM_discontinued_per_indication_acne$person_id))}else{RAM_flowchart_discontinued_acne<-0}
-if(length(unique(RAM_discontinued_per_indication_dermatitis$person_id))>0){RAM_flowchart_discontinued_dermatitis<-length(unique(RAM_discontinued_per_indication_dermatitis$person_id))}else{RAM_flowchart_discontinued_dermatitis<-0}
-# cleanup
-rm(RAM_discontinued_per_indication_psoriasis,RAM_discontinued_per_indication_acne,RAM_discontinued_per_indication_dermatitis)
-
-# Count discontinued by age, month, year
-discontinued_by_indication<-RAM_discontinued_all_ind[,.N, by = .(year,month, indication)]
-
-for(group in 1:length(unique(discontinued_by_indication$indication))){
-  # Create a subset of age group
-  each_group<-discontinued_by_indication[indication==unique(discontinued_by_indication$indication)[group]]
-  # Merge with empty df (for counts that do not have counts for all months and years of study)
-  each_group<-as.data.table(merge(x=empty_df,y=each_group,by=c("year","month"),all.x=TRUE))
-  # Fills in missing values with 0
-  each_group[is.na(N),N:=0][is.na(indication),indication:=unique(discontinued_by_indication$indication)[group]]
-  # Adjust for PHARMO
-  if(is_PHARMO){each_group<-each_group[year<2020,]}else{each_group<-each_group[year<2021,]}
-  # Create YM variable 
-  each_group<-within(each_group,YM<-sprintf("%d-%02d",year,month))
-  
-  # Prepare denominator
-  discontinued_count_min <- RAM_discontinued_rates[,c("YM","N")]
-  setnames(discontinued_count_min,"N","Freq")
-  
-  # Merge age-group subset count with all prevalent counts 
-  indication_discontinued_count<-merge(x=each_group,y=discontinued_count_min,by=c("YM"),all.x=TRUE)
-  # Masking set at 0
-  indication_discontinued_count[,masked:=0]
-  # If masking applies
-  if(mask==T){indication_discontinued_count[N>0&N<5,N:=5][Freq>0&Freq<5,Freq:=5][,masked:=1]}
-  # Calculates rates
-  indication_discontinued_count<-indication_discontinued_count[,rates:=as.numeric(N)/as.numeric(Freq)][is.nan(rates)|is.na(rates),rates:=0]
-  # Drop columns you don't need 
-  indication_discontinued_count<-indication_discontinued_count[,c("YM","N","Freq","rates","masked")]
-  
-  # Save files in medicine counts folder
-  saveRDS(indication_discontinued_count, (paste0(objective2_strat_dir,"/", pop_prefix,"_RAM_discontinued_counts_", unique(discontinued_by_indication$indication)[group],"_indication_group.rds")))
-  
-}
-
-
-
 # Clean up 
-rm(list = grep("^age_group|^RAM_discont|^RAM_inc|^RAM_prev|^incidence_|^prevalence_|^discontinued_|each_group|RAM_episodes|indication_", ls(), value = TRUE))
+rm(list = grep("^age_group|^RAM_discont|^RAM_inc|^RAM_prev|^incidence_|^prevalence_|^discontinued_|each_group|RAM_episodes|retinoid_incidence_data", ls(), value = TRUE))
 
 
 

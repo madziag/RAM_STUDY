@@ -4,21 +4,21 @@
 #Date: 29/04/2024
 
 ##################################################################################################################################################
-##################################################### OBJECTIVES: 1.1, 1.2, 1.5 ##################################################################
+############################################ Retinoid Prevalence, Incidence & Discontinuation ####################################################
 ##################################################################################################################################################
 
-## Objective 1.1: Prevalent (current) Retinoid/Valproate use (monthly)
-# Numerator -> Number of female subjects in cohort with Retinoid/Valproate episode overlapping the month by at least 1 day
+## Prevalent (current) Retinoid use (monthly)
+# Numerator -> Number of female subjects in cohort with Retinoid episode overlapping the month by at least 1 day
 # Denominator -> Total number of female subjects in cohort for at least 1 day in the month (denominator file)
-# Records needed -> 1. Retinoid/Valproate treatment episode files 2. Denominator files
+# Records needed -> 1. Retinoid treatment episode files 2. Denominator file
 
-## Objective 1.2: Incident (starters) Retinoid/Valproate use (monthly) 
-# Numerator -> Number of female subjects in cohort with a Retinoid/Valproate episode start in the month
+## Incident (starters) Retinoid use (monthly) 
+# Numerator -> Number of female subjects in cohort with a Retinoid episode start in the month
 # Denominator -> Total number of female subjects in cohort for at least 1 day in the month (denominator file)
-# Records needed -> 1. Retinoid/Valproate treatment episode files 2. Denominator files
+# Records needed -> 1. Retinoid treatment episode files 2. Denominator files
 
-## Objective 1.5: Discontinuation of Retinoid/Valproate use (monthly)
-# Numerator -> Number of female subjects in cohort who discontinue Retinoid/Valproate use in the month
+## Discontinuation of Retinoid use (monthly)
+# Numerator -> Number of female subjects in cohort who discontinue Retinoid use in the month
 # *** Definition of discontinuation: 
 # *** Subjects with only 1 treatment episode -> 
 # ****** if exit date from study <= 90 days from treatment episode end date -> DOES NOT COUNT AS A DISCONTINUED USER 
@@ -31,22 +31,17 @@
 # ********* if exit date from study <= 90 days from treatment episode end date -> DOES NOT COUNT AS A DISCONTINUED USER 
 # ********* if exit date from study > 90 days from treatment episode end date -> COUNTS AS A DISCONTINUED USER 
 # Denominator ->  Number of prevalent (current) users that month 
-# Records needed -> 1. Retinoid/Valproate treatment episode files 2. Prevalent counts (calculated in 1.1) 3. Indication records for valproates only 
+# Records needed -> 1. Retinoid treatment episode files 2. Prevalent counts (calculated above) 
 
 ##################################################################################################################################################
 ##################################################################################################################################################
 ##################################################################################################################################################
-
-# Loads denominator and empty df
+# Load denominator and empty df
 source(paste0(pre_dir,"denominators/load_denominator.R"))
-# Loads retinoid treatment episodes
+# Load retinoid treatment episodes
 retinoid_episodes<-readRDS(paste0(retinoid_treatment_episodes, pop_prefix, "_Retinoid_CMA_treatment_episodes.rds"))
-# Merges with study population to get birth_date, entry and exit dates
-retinoid_episodes<-merge(retinoid_episodes, retinoid_study_population[,c("person_id", "birth_date", "entry_date","exit_date")], by = "person_id")
 # Changes columns to correct data type/add column that indicates rownumber
 retinoid_episodes[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
-# # Removes not needed columns
-# retinoid_episodes<-retinoid_episodes[,-c("end.episode.gap.days", "episode.duration")]
 # Add row numbers to each row 
 retinoid_episodes[,rowID:=.I]
 # Creates a version of df_episodes for incidence counts (we do not need an expanded df for incidence counts)
@@ -63,14 +58,14 @@ retinoid_episodes_expanded[,year:=year(episode.day)][,month:=month(episode.day)]
 ##################################################################################################
 ################################## Calculates Prevalence  ########################################
 ##################################################################################################
-### Numerator = Number of female subjects in cohort with valproate/retinoid episode overlapping the month by at least 1 day 
+### Numerator = Number of female subjects in cohort with retinoid episode overlapping the month by at least 1 day 
 # Removes duplicates - keeps only the earliest record of person_id, year, month => we get the first record of person for every month in every year
+# Removes any records where episode.day falls outside of entry & exit dates
+retinoid_episodes_expanded<-retinoid_episodes_expanded[episode.day>=entry_date & episode.day<=exit_date,]
 # Creates data where each row represents a month of treatment within the treatment episode (patient is represented once per month)
 retinoid_prevalence<-retinoid_episodes_expanded[!duplicated(retinoid_episodes_expanded[,c("person_id", "episode.start", "year", "month")])]
-# Removes any records where episode.day falls outside of entry & exit dates
-retinoid_prevalence<-retinoid_prevalence[episode.day>=entry_date & episode.day<=exit_date,]
 # Removes unnecessary columns
-retinoid_prevalence<-retinoid_prevalence[,-c("rowID", "idnum", "episode.day")]
+retinoid_prevalence<-retinoid_prevalence[,-c("rowID", "idnum")]
 # Prevalence Counts
 retinoid_prevalence_counts<-retinoid_prevalence[,.N, by = .(year,month)]
 # Adjust for PHARMO
@@ -100,14 +95,14 @@ saveRDS(retinoid_prevalence, paste0(retinoid_counts_dfs, pop_prefix, "_Retinoid_
 ##################################################################################################
 ################################## Calculates Incidence ##########################################
 ##################################################################################################
-### Numerator = Number of female subjects in cohort with a valproate/retinoid episode start in the month 
+### Numerator = Number of female subjects in cohort with a retinoid episode start in the month 
 # Deduplicate df_episodes_expanded to only include records patients with the first start date 
 retinoid_incidence<-retinoid_episodes_for_incidence[!duplicated(retinoid_episodes_for_incidence)]
 # Order df by date, then keep only the first treatment episode for each patient id
 retinoid_incidence<-retinoid_incidence[order(person_id, episode.start)]
 retinoid_incidence<-retinoid_incidence[, head(.SD, 1), by = "person_id"]
 # Removes all episode starts that fall outside entry_date and exit_date
-retinoid_incidence<-retinoid_incidence[episode.start >= entry_date & episode.start<=exit_date,]
+retinoid_incidence<-retinoid_incidence[episode.start>=entry_date & episode.start<=exit_date,]
 # Creates year and month columns
 retinoid_incidence[,year:=year(episode.start)][,month:=month(episode.start)]
 # Removes unnecessary columns
@@ -136,7 +131,7 @@ retinoid_incidence_rates<-retinoid_incidence_rates[,c("YM", "N", "Freq", "rates"
 saveRDS(retinoid_incidence_rates, paste0(medicines_counts_dir, "/", pop_prefix, "_Retinoid_incidence_counts.rds"))
 # Saves incidence dfs
 saveRDS(retinoid_incidence, paste0(retinoid_counts_dfs, pop_prefix, "_Retinoid_incidence_data.rds"))
-       
+
 
 ##################################################################################################
 ############################# Calculates Discontinuation  ########################################
@@ -178,7 +173,7 @@ retinoid_discontinued_counts[year<min_data_available|year>max_data_available,tru
 retinoid_discontinued_counts[,masked:=0]
 # Create YM variable 
 retinoid_discontinued_counts<-within(retinoid_discontinued_counts, YM<- sprintf("%d-%02d", year, month))
-### Denominator = Number of prevalent valproate/retinoid users that month
+### Denominator = Number of prevalent retinoid users that month
 ##### ->  denominator file has already been created in for loop variable name = prevalence_all_counts
 # Prepare denominator 
 retinoid_prevalence_counts1<-retinoid_prevalence_rates[,c("YM", "N")]
@@ -196,4 +191,3 @@ saveRDS(retinoid_discontinued, paste0(retinoid_counts_dfs, pop_prefix, "_Retinoi
 
 # Clean up 
 rm(list = grep("^retinoid_discont|^retinoid_inc|^retinoid_prev|^retinoid_episodes_|retinoid_episodes", ls(), value = TRUE))
-

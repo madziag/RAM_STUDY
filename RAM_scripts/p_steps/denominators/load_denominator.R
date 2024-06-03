@@ -1,3 +1,4 @@
+
 ### Creates empty df for expanding counts files (when not all month-year combinations have counts) - uses denominator file min and max year values
 denominator<-as.data.table(readRDS(paste0(tmp,list.files(tmp,pattern=paste0(pop_prefix,"_denominator.rds")))))[,studyFUmonths:=NULL]
 # Split Y-M variable to year - month columns (for creating empty df & and getting min and max of data available)

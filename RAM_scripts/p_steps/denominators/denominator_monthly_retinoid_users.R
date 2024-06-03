@@ -1,3 +1,4 @@
+
 #Author: Magdalena Gamba M.D.
 #email: m.a.gamba@uu.nl
 #Organisation: Utrecht University, Utrecht, The Netherlands
@@ -13,7 +14,7 @@ retinoid_meds<-as.data.table(readRDS(paste0(medications_pop, pop_prefix, "_Retin
 all_retinoid_users<-length(unique(retinoid_meds$person_id))
 
 # Retinoid use should be between study entry and exit to be counted 
-retinoid_meds<-retinoid_meds[Date>=entry_date & Date<=exit_date,]
+retinoid_meds<-retinoid_meds[Date>=entry_date-90 & Date<=exit_date,]
 # after excluding meds that fall outside of entry and exit dates 
 #flowchart
 retinoid_within_entry_exit<-length(unique(retinoid_meds[,person_id]))
@@ -69,6 +70,3 @@ if(nrow(retinoid_study_population)>0){
   plot(FUmonths_df_retinoid$studyFUmonths, FUmonths_df_retinoid$Freq, ylab="Persons Observed per Month", xlab="Year and Month")
   invisible(dev.off())
 }
-
-
-

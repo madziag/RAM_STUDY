@@ -1,3 +1,6 @@
+# Get contraindicated codes
+source(paste0(pre_dir, "parameters/RAM_codes_per_indication.R"))
+
 if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_data.rds"))) {
   
   #############################################################################################
@@ -15,11 +18,6 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   
   RAM_concomitance_data_per_user<-unique(RAM_concomitance_data, by=c("person_id", "year", "month"))
   RAM_concomitance_data_per_user_contraindicated<-unique(RAM_concomitance_data_contraindicated, by=c("person_id", "year", "month"))
-  
-  #flowchart
-  if(length(unique(RAM_concomitance_data_per_user$person_id))){RAM_flowchart_concomit_users<-length(unique(RAM_concomitance_data_per_user$person_id))}else{RAM_flowchart_concomit_users<-0}
-  if(length(unique(RAM_concomitance_data_per_user_contraindicated$person_id))){RAM_flowchart_concomit_users_contraindicated<-length(unique(RAM_concomitance_data_per_user_contraindicated$person_id))}else{RAM_flowchart_concomit_users_contraindicated<-0}
-  
   
   # Total concomitance counts per user (for all concomitant users and for concomitant users in contraindicated ATCs)
   RAM_concomitance_data_per_user_counts<-RAM_concomitance_data_per_user[,.N, by = .(year,month)]
@@ -69,10 +67,6 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # Remove true duplicates
   RAM_concomitance_data<-unique(RAM_concomitance_data)
   RAM_concomitance_data_contraindicated<-unique(RAM_concomitance_data_contraindicated)
-  
-  # Flowchart
-  RAM_flowchart_concomit_records<-nrow(RAM_concomitance_data)
-  RAM_flowchart_concomit_records_contraindicated<-nrow(RAM_concomitance_data_contraindicated)
   
   # Total concomitance counts per user (for all concomitant users and for concomitant users in contraindicated ATCs)
   RAM_concomitance_data_per_record_counts<-RAM_concomitance_data[,.N, by = .(year,month)]

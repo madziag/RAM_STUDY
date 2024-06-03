@@ -1,3 +1,10 @@
+# Read in retinoid prevalence data
+retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
+# Rename episode start column
+setnames(retinoid_prevalence_data, old=c("episode.start", "episode.day"), new=c("episode.start.retinoid", "episode.day.retinoid")) 
+# Get first retinoid use in entry into study (could be incidence or prevalent use)
+retinoid_prevalence_data<-unique(retinoid_prevalence_data, by=c("person_id"))
+
 # Load Retinoid Study Population (already loaded)
 # Correct date format
 retinoid_study_population[,entry_date:=as.IDate(entry_date,"%Y%m%d")][,exit_date:=as.IDate(exit_date,"%Y%m%d")][,birth_date:=as.IDate(birth_date,"%Y%m%d")]
@@ -9,29 +16,22 @@ retinoid_study_population[,age_groups:=ifelse(retinoid_study_population[,age_at_
                                               ifelse(retinoid_study_population[,age_at_entry_date>=21&age_at_entry_date<31],"21-30.99",
                                                      ifelse(retinoid_study_population[,age_at_entry_date>=31&age_at_entry_date<41],"31-40.99",
                                                             ifelse(retinoid_study_population[,age_at_entry_date>=41&age_at_entry_date<56],"41-55.99","Not in range"))))]
+
 # Load RAM medications 
 RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
+RAM_meds<-retinoid_prevalence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_meds,on=.(person_id)]
+
+# Keep records where RAM date is after retinoid date and RAM date falls within entry and exit dates 
+RAM_meds<-RAM_meds[Date>=episode.start.retinoid & Date>=entry_date-90 & Date<=exit_date,c("person_id","ATC.retinoid","Code","Date","episode.start.retinoid")]
 # Get RAM meds in Retinoid users 
-RAM_meds_in_retinoid_users<-merge(retinoid_study_population[,c("person_id","birth_date","entry_date","exit_date","fu_dur_days","age_at_entry_date","age_groups")], RAM_meds[,c("person_id","Code","Date")], by=c("person_id"))
-# Remove any records that fall outside entry and exit days 
-RAM_meds_in_retinoid_users<-RAM_meds_in_retinoid_users[Date>=entry_date&Date<=exit_date,]
-# Create subsets for each of the indications 
-# RAM - psoriasis 
-RAM_psoriasis<-RAM_meds_in_retinoid_users[Code%in%c("D05AC01","D05AD02","D05BA02","D05BX51","D07AB01","D07AB02","D07AB03","D07AB04","D07AB05","D07AB06","D07AB07",
-                                                    "D07AB08","D07AB09","D07AB10","D07AB11","D07AB19","D07AB21","D07AB30","D07AC01","D07AC02","D07AC03","D07AC04",
-                                                    "D07AC05","D07AC06","D07AC07","D07AC08","D07AC09","D07AC10","D07AC11","D07AC12","D07AC13","D07AC14","D07AC15",
-                                                    "D07AC16","D07AC17","D07AC18","D07AC19","D07AC21","D07AD01","D07AD02","D11AH01","D11AH02","L04AA32","L04AB01",
-                                                    "L04AB02","L04AB04","L04AB05","L04AC05","L04AC10","L04AC12", "L04AC13","L04AC16","L04AC17","L04AD01","L04AX07"),]
-# RAM - acne
-RAM_acne<-RAM_meds_in_retinoid_users[Code%in%c("D07AA01","D07AB19","D10AA01","D10AA02","D10AA03","D10AE01","D10AF01","D10AF02","D10AF51","D10AF52",
-                                               "H02AA01","H02AA02","H02AA03","H02AB01","H02AB02","H02AB03","H02AB04","H02AB05","H02AB08","H02AB09",
-                                               "H02AB10","H02AB11","H02AB13","H02AB14","H02AB15","H02AB17","J01AA08","J01FA01","J01FA10","S01AA17","S01AA26"),]
-# RAM - dermatitis 
-RAM_dermatitis<-RAM_meds_in_retinoid_users[Code%in%c("D07AB01","D07AB02","D07AB03","D07AB04","D07AB05","D07AB06","D07AB07","D07AB08","D07AB09","D07AB10",
-                                                     "D07AB11","D07AB19","D07AB21","D07AB30","D11AH01","D11AH02","H02AB06","H02AB07","L04AD01","L04AX01","L04AX03"),]         
+RAM_meds_in_retinoid_users<-retinoid_study_population[,c("person_id","birth_date","entry_date","exit_date","fu_dur_days","age_at_entry_date","age_groups")][RAM_meds,on=.(person_id)]
+# Create subsets for each of the indications - based on the Retinoid not RAM
+RAM_psoriasis<-RAM_meds_in_retinoid_users[ATC.retinoid=="D05BB02",][,indication:="psoriasis"]
+RAM_acne<-RAM_meds_in_retinoid_users[ATC.retinoid=="D10BA01",][,indication:="acne"]
+RAM_dermatitis<-RAM_meds_in_retinoid_users[ATC.retinoid=="D11AH04",][,indication:="dermatitis"]
 
 # Remove duplicates for each group 
-# retinoid study population # alreadu deduplicated 
+# retinoid study population # already deduplicated 
 # All RAM's in retinoid users 
 RAM_meds_in_retinoid_users_unique<-unique(RAM_meds_in_retinoid_users,by="person_id")
 # Psoriasis 
@@ -113,7 +113,7 @@ for (i in 1:length(Pops_for_baseline_tables)){
 
 
 # Clean up 
-rm(list= grep("Pops|RAM_a|RAM_d|RAM_p|RAM_m", ls(), value = TRUE))
+rm(list= grep("Pops|RAM_a|RAM_d|RAM_p|RAM_m|retinoid_incidence_data", ls(), value = TRUE))
 
 
 
