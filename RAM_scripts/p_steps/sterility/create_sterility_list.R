@@ -17,6 +17,7 @@ source(paste0(pre_dir,"conceptsets/create_concept_sets_dx_codes.R"))
 source(paste0(pre_dir,"conceptsets/excluded_ICD.R"))
 # Gets list of events tables from CDM/LOT4 folders
 events_files<-list.files(path=path_dir, pattern = "EVENTS", ignore.case = TRUE)
+
 # Finds sterility codes in events tables 
 if(length(events_files)>0){
   # Processes each EVENTS table
@@ -25,6 +26,7 @@ if(length(events_files)>0){
     events_prefix<-gsub(".csv", "", events_files[y])
     # Loads events table
     df<-fread(paste(path_dir, events_files[y], sep=""), stringsAsFactors = FALSE)
+    
     # Data Cleaning
     df<-as.data.table(df[,c("person_id", "start_date_record", "event_code", "event_record_vocabulary", "meaning_of_event", "event_free_text")]) # Keeps necessary columns
     df<-df[, lapply(.SD, FUN=function(x) gsub("^$|^ $", NA, x))] # Makes sure missing data is read appropriately
@@ -81,8 +83,8 @@ if(length(events_files)>0){
     df<-df[,-c("event_free_text")]
     # Adds column with vocabulary main type i.e. start, READ, SNOMED
     df[,vocab:=ifelse(df[,Vocabulary] %chin% c("ICD9", "ICD9CM", "ICD9PROC", "MTHICD9", "ICD10", "ICD-10", "ICD10CM", "ICD10/CM", "ICD10ES" , "ICPC", "ICPC2", "ICPC2P", "ICPC-2", "CIAP", "ICD9_free_italian_text"), "start",
-                       ifelse(df[,Vocabulary] %chin% c("RCD","RCD2", "READ", "CPRD_Read"), "READ",
-                              ifelse(df[,Vocabulary] %chin% c("SNOMEDCT_US", "SCTSPA", "SNOMED"), "SNOMED", "UNKNOWN")))]
+                      ifelse(df[,Vocabulary] %chin% c("RCD","RCD2", "READ", "CPRD_Read"), "READ",
+                             ifelse(df[,Vocabulary] %chin% c("SNOMEDCT_US", "SCTSPA", "SNOMED"), "SNOMED", "UNKNOWN")))]
     # Check if records have dots or not Flag = 1 when dotted and 0 when not dotted 
     df[, flag:= ifelse(str_detect(Code, "\\."), 1, 0)]
     # if all flags are 0 then use undotted codes else use dotted codes 
@@ -197,6 +199,7 @@ matches<-c("sterility")
 source(paste0(pre_dir,"conceptsets/create_concept_sets_dx_codes.R"))
 # Gets list of procedure tables from CDM/LOT4 folders
 proc_files<-list.files(path=path_dir, pattern = "PROCEDURES", ignore.case = TRUE)
+
 # Finds sterility codes in procedures tables 
 if(length(proc_files)>0){
   # Processes each EVENTS table
@@ -208,7 +211,7 @@ if(length(proc_files)>0){
     # Data Cleaning
     df<-as.data.table(df[,c("person_id", "procedure_date", "procedure_code", "procedure_code_vocabulary", "meaning_of_procedure")]) # Keeps necessary columns
     df<-df[, lapply(.SD, FUN=function(x) gsub("^$|^ $", NA, x))] # Makes sure missing data is read appropriately
-   
+    
     setnames(df,"meaning_of_procedure","Meaning") # Renames column names
     setnames(df,"procedure_date","Date") # Renames column names
     setnames(df,"procedure_code_vocabulary","Vocabulary") # Renames column names
@@ -310,7 +313,7 @@ if(length(proc_files)>0){
             df_subset[,table_origin:='PROCEDURES']
             # Remove excluded codes (found as a result of code with no dots)
             df_subset<-setDT(df_subset)[Code %!in% excluded_codes]
-
+            
             if(nrow(df_subset)>0){
               # Checks for subpops - if present, saves with the prefix of subpop name 
               saveRDS(data.table(df_subset), paste0(events_tmp_sterility, pop_prefix, "_", names(codelist_start_all[i]), "_",procedures_prefix, "_start.rds"))

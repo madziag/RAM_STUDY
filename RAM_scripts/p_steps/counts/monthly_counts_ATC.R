@@ -6,171 +6,157 @@
 # 1. Looks for ATC codes from the ATC codelist (concept set created via CreateConceptSets_ATC.R) in MEDICINES TABLES 
 # 2. Results in list of records with matching ATC
 # 3. Counts records saved in the previous step by month/year for each code group 
-# 4. Counts records saved in the previous step by month/year for each ATC of Retinoids and/or Valproates 
-# Loads Create Concept Sets file
-matches<-c()
-source(paste0(pre_dir,"conceptsets/create_concept_sets_ATC.R"))
-# Creates empty table for counts 
-# Gets min and max year from denominator file
-FUmonths_df<-as.data.table(FUmonths_df)
-min_data_available<-min(FUmonths_df$Y)
-max_data_available<-max(FUmonths_df$Y)
-FUmonths_df[, c("Y", "M") := tstrsplit(YM, "-", fixed=TRUE)]
-empty_df<-expand.grid(seq(min(FUmonths_df$Y), max(FUmonths_df$Y)), seq(1, 12))
-names(empty_df)<-c("year", "month")
+################################################################################################################
+################################################################################################################
+################################################################################################################
 
-# Creates List of Retinoid and Valproates for individual counts
-codelist_ind<-Filter(function(x) names(codelist_all)== "Valproate" | names(codelist_all) == "Retinoid", codelist_all)
-codelist_ind<-Filter(function(x) length(x) > 0, codelist_ind)
+# Concept Sets
+matches<-c() #matches all ATC codes -> Retinoid + RAM codes 
+source(paste0(pre_dir,"conceptsets/create_concept_sets_ATC.R")) #load concept sets
 
-if(study_type == "Retinoid"){
-  # Removes Valproate codes
-  codelist_all<-codelist_all[!grepl("valp", names(codelist_all), ignore.case = TRUE)]
-  # Removes Valproate codes for individual counts
-  codelist_ind<-Filter(function(x) names(codelist_all) == "Retinoid", codelist_all)
-  codelist_ind<-Filter(function(x) length(x) > 0, codelist_ind)
-} else {
-  print("Please indicate study type")
-}
+# Empty df grid for counts
+FUmonths_df<-as.data.table(FUmonths_df) #convert to data.table
+min_data_available<-min(FUmonths_df$Y) #get min year from denominator file
+max_data_available<-max(FUmonths_df$Y) #get max year from denominator file
+FUmonths_df[, c("Y", "M") := tstrsplit(YM, "-", fixed=TRUE)] #create Y, M variables from YM 
+empty_df<-expand.grid(seq(min(FUmonths_df$Y), max(FUmonths_df$Y)), seq(1, 12)) #create grid with all possible month-year combinations from min year to max year
+names(empty_df)<-c("year", "month") #rename the columns 
 
-
-# Creates other lists
-comb_meds<-list()
-comb_meds1<-list()
-# Loads Medicines files
+# Lists all medicines files 
 med_files<-list.files(path=path_dir, pattern = "MEDICINES", ignore.case = TRUE) 
-# Checks for MEDICINES Tables present
+
+# Checks that there is at least 1 medicine file 
 if(length(med_files)>0){
-  # Processes each EVENTS table
+  # do this for each medicine files 
   for (y in 1:length(med_files)){
-    # Gets prefix for medicines tables 
-    meds_prefix<-gsub(".csv", "", med_files[y])
-    # Loads table
-    df<-fread(paste(path_dir, med_files[y], sep=""), stringsAsFactors = FALSE)
+    #get prefix of table - to be used in file naming 
+    meds_prefix<-gsub(".csv", "", med_files[y]) 
+    # Load current table 
+    df<-fread(paste(path_dir, med_files[y], sep=""), stringsAsFactors = FALSE) #load table
+    print("###################################################")
+    print(paste("Number_of_rows_of_df_loaded", nrow(df)))
     # Data Cleaning
-    df<-df[,c("person_id", "medicinal_product_atc_code", "date_dispensing", "date_prescription", "meaning_of_drug_record", "presc_duration_days", "disp_number_medicinal_product", "presc_quantity_per_day", "medicinal_product_id")] # Keep necessary columns
-    df<-df[,lapply(.SD, FUN=function(x) gsub("^$|^ $", NA, x))] # Makes sure missing data is read appropriately
-    setnames(df,"meaning_of_drug_record","Meaning") # Renames column names
-    setnames(df,"medicinal_product_atc_code", "Code") # Renames column names
-    # Remove nonbreaking spaces 
-    df[,Code:=gsub("\u00A0","",Code, fixed = TRUE)]
-    # Creates new column Date. It takes the date from date_dispensing. If value from date_dispensing is missing, it takes the date value from date_prescription
+    df<-df[,c("person_id", "medicinal_product_atc_code", "date_dispensing", "date_prescription", "meaning_of_drug_record", "presc_duration_days", "disp_number_medicinal_product", "presc_quantity_per_day", "medicinal_product_id")] #keep only necessary columns
+    df<-df[,lapply(.SD, FUN=function(x) gsub("^$|^ $", NA, x))] #replace any missing values with NA
+    setnames(df,"meaning_of_drug_record","Meaning") #rename column 
+    setnames(df,"medicinal_product_atc_code","Code") #rename column
+    df[,Code:=gsub("\u00A0","",Code, fixed = TRUE)] #remove non breaking spaces 
+    # Creates new column Date. 
+    ## if date_dispensing is not missing, then Date = date_dispensing
+    ## if date_dispensing is missing, then Date = date_prescription
     df<-df[,Date:= ifelse(!is.na(date_dispensing), date_dispensing, date_prescription)]
+    
     colnames_events<-names(df)
     std_names_events<-names(study_population)
     colnames_events<-colnames_events[!colnames_events %in% "person_id"]
-    df[,medicinal_product_id:=as.integer(medicinal_product_id)][,Code:=as.character(Code)][,disp_number_medicinal_product:=as.integer(disp_number_medicinal_product)][,presc_duration_days:=as.numeric(presc_duration_days)]
-    # Merges medicine table with study population table (there is no missing data in this table)
-    df[,person_id:=as.character(person_id)]
-    study_population[,person_id:=as.character(person_id)]
+    
+    # Merge medicine table with study population table (there is no missing data in this table)
+    df[,person_id:=as.character(person_id)] #person_id converted to data type character 
+    study_population[,person_id:=as.character(person_id)]#person_id converted to data type character 
     df<-df[study_population,on=.(person_id)] # Left join, keeps all people in the study population even if they didn't have an event
-    df<-df[,age_start_follow_up:=as.numeric(age_start_follow_up)] # Transforms to numeric variables  
-    # Removes records with missing values in the medicine table 
-    df<-df[!rowSums(is.na(df[,..colnames_events]))==length(colnames_events)]
-    df[,Date:=as.IDate(Date,"%Y%m%d")] # Transforms to date variables
-    df[,entry_date:=as.IDate(entry_date,"%Y%m%d")] # Transforms to date variables
-    # Creates year variable 
-    df[,year:=year(Date)] 
-    df<-df[!is.na(year)] # Removes records with both dates missing
-    if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} # Years used in study
-    # Removes records with ATC code missing 
-    df<-df[!(is.na(Code))]
-    df<-df[sex_at_instance_creation == "M" | sex_at_instance_creation == "F"] # Removes unspecified sex
+    print("###################################################")
+    print(meds_prefix)
+    print("###################################################")
+    print(paste("Number_of_rows_of_df_merged_with_studypop", nrow(df)))
+    df<-df[!rowSums(is.na(df[,..colnames_events]))==length(colnames_events)] #removes records with missing values in the medicine table 
+    print("###################################################")
+    print("presc_duration_days-unique values BEFORE=>")
+    print(unique(df$presc_duration_days))
+    # Adjust column data types 
+    df[presc_duration_days == ".", presc_duration_days := NA]
+    df[,presc_duration_days:=as.numeric(presc_duration_days)]
+    # df[,age_start_follow_up:=as.numeric(age_start_follow_up)]
+    # df[,disp_number_medicinal_product:=as.integer(disp_number_medicinal_product)][,medicinal_product_id:=as.integer(medicinal_product_id)]
+    
+    print("###################################################")
+    print("presc_duration_days-unique values AFTER=>")
+    print(unique(df$presc_duration_days))
+    df[,Code:=as.character(Code)]
+    df[,Date:=as.IDate(Date,"%Y%m%d")][,entry_date:=as.IDate(entry_date,"%Y%m%d")] 
+    
+    # Create Year variable from Date
+    df[,year:=year(Date)]
+    
+    # Filter out records that have year or ATC missing and are not within years used in study 
+    df<-df[!is.na(year),]
+    print("###################################################")
+    print(paste("Number_of_rows_of_df_missing_year_removed", nrow(df)))
+    df<-df[!is.na(Code),]
+    print("###################################################")
+    print(paste("Number_of_rows_of_df_missing_code_removed", nrow(df)))
+    if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} 
+    print("###################################################")
+    print(paste("Number_of_rows_of_df_between_2008_2020", nrow(df)))
+    # Filter out records with unspecified sex
+    df<-df[sex_at_instance_creation=="M"|sex_at_instance_creation=="F"]
+    print("###################################################")
+    print(paste("Number_of_rows_of_df_unspecifed_sex_removed", nrow(df)))
     # Prints Message
+    print("###################################################")
     print(paste0("Finding matching records in ", med_files[y]))
-    # Checks if df is NOT empty
+
+    # Looking for ATC matches in Current Medicines Table 
+    #checks first if df has at least one row of records
     if(nrow(df)>0){
-      # Looks for matches in df using event vocabulary type specific code list
+      # checks if df has each of the ATC codes in the previously created codelist
       for (i in 1:length(codelist_all)){
-        df_subset<-setDT(df)[Code %chin% codelist_all[[i]][,Code]]
-        df_subset<-df_subset[!duplicated(df_subset),]
-        saveRDS(data.table(df_subset), paste0(events_tmp_ATC, pop_prefix,"_", names(codelist_all[i]), "_",meds_prefix, ".rds"))
+        df_subset<-setDT(df)[Code %chin% codelist_all[[i]][,Code]]#creates subset with current ATC code group being checked i.e. retinoids, and each RAM group 
+        df_subset<-df_subset[!duplicated(df_subset),]# removes any duplicates 
+        print("###################################################")
+        print(paste("Number_of_rows_of_df_subset",names(codelist_all[i]) ,nrow(df_subset)))
+        if(nrow(df_subset)<=0){print(paste("There are NO records for", names(codelist_all[i])))}
+        if(nrow(df_subset)>0){print(paste("saving subset for",names(codelist_all[i]), "in", events_tmp_ATC))}
+        saveRDS(data.table(df_subset), paste0(events_tmp_ATC, pop_prefix,"_", names(codelist_all[i]), "_",meds_prefix, ".rds")) #save the subset into events folder 
       }
-    }
+    } 
   }
+  # Counting the records 
   print("Counting records")
-  # Monthly Counts 
-  for(i in 1:length(codelist_all)){
-    # Gets list of files in each code group folder
-    files<-list.files(path=events_tmp_ATC, pattern=names(codelist_all[i]))
-    # Performs counts per month/year
+  # Create empty lists for use below
+  comb_meds<-list()
+  comb_meds1<-list()
+  # For each Retinoid-RAM group
+  for(j in 1:length(codelist_all)){
+    files<-list.files(path=events_tmp_ATC, pattern=names(codelist_all[j]))#list of files in current code group
+    # TESTING
+    print("###################################################")
+    print(names(codelist_all[j]))
+    print(paste("Created files:", files))
+    #checks that there is at least on file in the list
     if (length(files)>0){
-      # Loads files 
-      comb_meds[[i]]<-do.call(rbind,lapply(paste0(events_tmp_ATC, files), readRDS))
-      comb_meds[[i]]<-comb_meds[[i]][!duplicated(comb_meds[[i]]),]
-      comb_meds1[[i]]<-comb_meds[[i]][Date>=entry_date & Date<=exit_date]
-      # Counts by month-yearcode
-      counts<-comb_meds1[[i]][,.N, by = .(year,month(Date))]
-      # Merges with empty_df
-      counts<- as.data.table(merge(x = empty_df, y = counts, by = c("year", "month"), all.x = TRUE))
-      # Fills in missing values with 0
-      counts[is.na(counts[,N]), N:=0]
+      # Load and bind all data in the same code group
+      comb_meds[[j]]<-do.call(rbind,lapply(paste0(events_tmp_ATC, files), readRDS))
+      comb_meds[[j]]<-comb_meds[[j]][!duplicated(comb_meds[[j]]),]
+      comb_meds1[[j]]<-comb_meds[[j]][Date>=entry_date & Date<=exit_date]
+      # Counts
+      counts<-comb_meds1[[j]][,.N, by = .(year,month(Date))]# count by year-month
+      counts<-as.data.table(merge(x=empty_df,y=counts,by=c("year","month"),all.x = TRUE))#merge with empty df
+      counts[is.na(counts[,N]), N:=0]#fill in missing values with 0
       # Column detects if data is available this year or not #3-> data is not available, 0 values because data does not exist; 16-> data is available, any 0 values are true
       counts[year<min_data_available|year>max_data_available,true_value:=3][year>=min_data_available&year<=max_data_available,true_value:=16]
-      # Masking values less than 5
-      # Creates column that indicates if count is less than 5 (but more than 0) and value needs to be masked 
-      counts[,masked:=ifelse(N<5 & N>0, 1, 0)]
-      # Changes values less than 5 and more than 0 to 5
+      # Create column that indicates if count is less than 5 (but more than 0) and value needs to be masked 
+      counts[,masked:=ifelse(N>0&N<5,1,0)]
+      # Change values less than 5 and more than 0 to 5 (only if masked is 1)
       if(mask==T){counts[masked==1,N:=5]} else {counts[masked==1,N:=N]}
-      # Calculates rates
+      # Calculate rates
       counts<-within(counts, YM<- sprintf("%d-%02d", year, month))
       counts<-merge(x = counts, y = FUmonths_df, by = c("YM"), all.x = TRUE)
       counts<-counts[,rates:=as.numeric(N)/as.numeric(Freq)][,rates:=rates*1000][is.nan(rates)|is.na(rates), rates:=0]
       counts<-counts[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
-      # Saves files in g_output monthly counts 
-      if(comb_meds[[i]][,.N]>0){
-        saveRDS(comb_meds[[i]], paste0(medications_pop, pop_prefix, "_", names(codelist_all[i]),"_MEDS.rds"))
-        saveRDS(counts, paste0(monthly_counts_atc,"/", pop_prefix, "_", names(codelist_all[i]),"_MEDS_counts.rds"))
-      } else {
-        print(paste("There are no matching records for", names(codelist_all[i])))
-      }
+      # Save files 
+      if(comb_meds[[j]][,.N]>0){
+        saveRDS(comb_meds[[j]], paste0(medications_pop, pop_prefix, "_", names(codelist_all[j]),"_MEDS.rds"))
+        saveRDS(counts, paste0(monthly_counts_atc,"/", pop_prefix, "_", names(codelist_all[j]),"_MEDS_counts.rds"))
+      } 
     } else {
-      print(paste("There are no matching records for", names(codelist_all[i])))
-    }
-  }
-  # Individual counts for Valproates and Retinoids
-  for(i in 1:length(codelist_ind)){
-    ind_files<-list.files(path=medications_pop, pattern = paste0(names(codelist_ind)[i], ".rds"))
-    if(length(ind_files)>0){
-      for(x in 1:length(ind_files)){
-        df_ind<-readRDS(paste0(medications_pop, ind_files[x]))
-        df_ind<-df_ind[!duplicated(df_ind),]
-        df_ind<-df_ind[Date>=entry_date & Date<=exit_date]
-        for(j in 1:length(unique(codelist_ind[[i]]$Code))){
-          sub_ind<-setDT(df_ind)[Code %chin% codelist_ind[[i]][j][,Code]]
-          counts_ind<- sub_ind[,.N, by = .(year,month(Date))]
-          counts_ind<- as.data.table(merge(x = empty_df, y = counts_ind, by = c("year", "month"), all.x = TRUE))
-          counts_ind[is.na(counts_ind[,N]), N:=0]
-          # Column detects if data is available this year or not #3-> data is not available, 0 values because data does not exist; 16-> data is available, any 0 values are true
-          counts_ind[year<min_data_available|year>max_data_available,true_value:=3][year>=min_data_available&year<=max_data_available,true_value:=16]
-          # Masking values less than 5
-          # Creates column that indicates if count is less than 5 (but more than 0) and value needs to be masked 
-          counts_ind[,masked:=ifelse(N<5 & N>0, 1, 0)]
-          # Changes values less than 5 and more than 0 to 5
-          if(mask==T){counts_ind[masked==1,N:=5]} else {counts_ind[masked==1,N:=N]}
-          # Calculates rates
-          counts_ind<-within(counts_ind, YM<- sprintf("%d-%02d", year, month))
-          counts_ind<-merge(x = counts_ind, y = FUmonths_df, by = c("YM"), all.x = TRUE)
-          counts_ind <-counts_ind[,rates:=as.numeric(N)/as.numeric(Freq)][,rates:=rates*1000][is.nan(rates)|is.na(rates), rates:=0]
-          counts_ind <-counts_ind[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
-          if(sub_ind[,.N]>0){
-            saveRDS(counts_ind, paste0(monthly_counts_atc,"/",pop_prefix,"_", tolower(names(codelist_ind[i])),"_",codelist_ind[[i]][j][,Medication],codelist_ind[[i]][j][,Code],"_MEDS_counts.rds"))
-          } else {
-            print(paste("There are no matching records for", names(codelist_all[i])))
-          }
-        } 
-      }
-    } else {
-      print(paste("There are no matching records for", names(codelist_all[i])))
+      print(paste("There are no matching records for", names(codelist_all[j])))
     }
   }
 } else {
-  print("There are no MEDICATIONS tables to analyse!")
+  print("There are no MEDICINES tables to analyse!")
 }
 
 # Delete all files in events_tmp_ATC (so as not to have them merge with the second subpopulation )
 for(file in list.files(events_tmp_ATC, pattern = "\\.rds$", full.names = TRUE)){unlink(file)}
-
-
 # Cleanup
 rm(list = grep("^codelist|^comb|^count|^df|^sub", ls(), value = TRUE))
