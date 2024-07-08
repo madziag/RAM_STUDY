@@ -7,10 +7,6 @@ if(file.exists(paste0(objective1_temp_dir, pop_prefix,"_RAM_prevalence_data.rds"
   
   RAM_prevalence_data<-as.data.table(readRDS(paste0(objective1_temp_dir, pop_prefix,"_RAM_prevalence_data.rds")))
   
-  # TROUBLESHOOTING
-  print(paste(regions[reg], pop_prefix))
-  print(paste("RAM Prevalence:",nrow(RAM_prevalence_data) , "rows"))
-  
   if(nrow(RAM_prevalence_data)>0){
     # Drop unneeded columns 
     RAM_prevalence_data<-RAM_prevalence_data[,-c("episode.ID","end.episode.gap.days","episode.duration","birth_date","entry_date","exit_date","current_age","age_group")]
@@ -44,9 +40,6 @@ if(file.exists(paste0(objective1_temp_dir, pop_prefix,"_RAM_prevalence_data.rds"
     # Count prevalence by indication, month, year
     prevalence_by_indication<-RAM_prevalence_data[,.N, by = .(year,month, indication)]
     
-    # TROUBLESHOOTING
-    print(paste("unique indications prevalence:", unique(prevalence_by_indication$indication)))
-    
     for(group in 1:length(unique(prevalence_by_indication$indication))){
       # Create a subset of age group
       each_group<-prevalence_by_indication[indication==unique(prevalence_by_indication$indication)[group]]
@@ -77,7 +70,9 @@ if(file.exists(paste0(objective1_temp_dir, pop_prefix,"_RAM_prevalence_data.rds"
     }
   } 
 } else {
-  print(paste("There is no prevalence data for", regions[reg], pop_prefix))
+  if(is_BIFAP){print(paste("There is no prevalence data for", regions[reg], pop_prefix))}
+  if(is_PHARMO){print("There is no prevalence data")}
+ 
   # Flowchart when no records exist
   RAM_flowchart_prevalence<-0
   RAM_flowchart_prevalence_psoriasis<-0
@@ -92,9 +87,6 @@ if(file.exists(paste0(objective1_temp_dir, pop_prefix,"_RAM_prevalence_data.rds"
 if(file.exists(paste0(objective1_temp_dir, pop_prefix,"_RAM_incidence_data.rds"))){
   
   RAM_incidence_data<-as.data.table(readRDS(paste0(objective1_temp_dir, pop_prefix,"_RAM_incidence_data.rds")))
-  
-  # TROUBLESHOOTING
-  print(paste("RAM Incidence:",nrow(RAM_incidence_data) , "rows"))
   
   if(nrow(RAM_incidence_data)>0){
     # Drop unneeded columns
@@ -120,9 +112,6 @@ if(file.exists(paste0(objective1_temp_dir, pop_prefix,"_RAM_incidence_data.rds")
     
     # Count incidence by indication, month, year
     incidence_by_indication<-RAM_incidence_data[,.N, by = .(year,month, indication)]
-    
-    # TROUBLESHOOTING
-    print(paste("unique indications incidence:", unique(incidence_by_indication$indication)))
     
     for(group in 1:length(unique(incidence_by_indication$indication))){
       # Create a subset of age group
@@ -155,7 +144,8 @@ if(file.exists(paste0(objective1_temp_dir, pop_prefix,"_RAM_incidence_data.rds")
     }
   }
 } else {
-  print(paste("There is no incidence data for", regions[reg], pop_prefix))
+  if(is_BIFAP){print(paste("There is no incidence data for", regions[reg], pop_prefix))}
+  if(is_PHARMO){print("There is no incidence data")}
   # Flowchart
   RAM_flowchart_incidence<-0
   RAM_flowchart_incidence_psoriasis<-0
@@ -171,9 +161,6 @@ if(file.exists(paste0(objective1_temp_dir, pop_prefix,"_RAM_incidence_data.rds")
 if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_discontinued_data.rds"))){
   
   RAM_discontinued_data<-as.data.table(readRDS(paste0(objective2_temp_dir, pop_prefix, "_RAM_discontinued_data.rds")))
-  
-  # TROUBLESHOOTING
-  print(paste("RAM Discontinued:", nrow(RAM_discontinued_data) , "rows"))
   
   if(nrow(RAM_discontinued_data)>0){
     # Drops unneeded columns
@@ -202,9 +189,6 @@ if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_discontinued_data.r
     
     # Count incidence by indication, month, year
     discontinued_by_indication<-RAM_discontinued_data[,.N, by = .(year,month, indication)]
-    
-    # TROUBLESHOOTING
-    print(paste("unique indications discontinued:", unique(discontinued_by_indication$indication)))
     
     for(group in 1:length(unique(discontinued_by_indication$indication))){
       # Create a subset of age group
@@ -237,7 +221,8 @@ if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_discontinued_data.r
     }
   }
 } else {
-  print(paste("There is no discontined data for", regions[reg], pop_prefix))
+  if(is_BIFAP){print(paste("There is no discontined data for", regions[reg], pop_prefix))}
+  if(is_PHARMO){print("There is no discontined data")}
   # Flowchart
   RAM_flowchart_discontinued<-0
   RAM_flowchart_discontinued_psoriasis<-0
@@ -245,7 +230,7 @@ if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_discontinued_data.r
   RAM_flowchart_discontinued_dermatitis<-0
 }
 
-#################################################################
+
 #################### SWITCHERS BY INDICATION #################### 
 #################################################################
 # Data Loading & Cleaning
@@ -253,9 +238,6 @@ if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_discontinued_data.r
 if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_switcher_data.rds"))){
   
   RAM_switcher_data<-as.data.table(readRDS(paste0(objective2_temp_dir, pop_prefix, "_RAM_switcher_data.rds")))
-  
-  # TROUBLESHOOTING
-  print(paste("RAM Switched:",nrow(RAM_switcher_data) , "rows"))
   
   if(nrow(RAM_switcher_data)>0){
     # Drop unneeded columns
@@ -281,9 +263,6 @@ if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_switcher_data.rds")
     
     # Count incidence by indication, month, year
     switcher_by_indication<-RAM_switcher_data[,.N, by = .(year,month, indication)]
-    
-    # TROUBLESHOOTING
-    print(paste("unique indications switchers:", unique(switcher_by_indication$indication)))
     
     for(group in 1:length(unique(switcher_by_indication$indication))){
       # Create a subset of age group
@@ -316,7 +295,8 @@ if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_switcher_data.rds")
     }
   }
 } else {
-  print(paste("There are no switcher files for", regions[reg], pop_prefix))
+  if(is_BIFAP){print(paste("There are no switcher files for", regions[reg], pop_prefix))}
+  if(is_PHARMO){print("There are no switcher files")}
   # Flowchart
   RAM_flowchart_switcher<-0
   RAM_flowchart_switcher_psoriasis<-0
@@ -331,10 +311,7 @@ if(file.exists(paste0(objective2_temp_dir, pop_prefix, "_RAM_switcher_data.rds")
 if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_data.rds"))){
   
   RAM_concomit_data<- as.data.table(readRDS(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_data.rds")))
-  
-  # TROUBLESHOOTING
-  print(paste("RAM Concomitance:",nrow(RAM_concomit_data) , "rows"))
-  
+
   if(nrow(RAM_concomit_data)>0){
     # Drop unneeded columns
     RAM_concomit_data<-RAM_concomit_data[,-c("episode.start.retinoid","episode.end.retinoid","ATC.retinoid","birth_date","entry_date","exit_date","current_age","age_group")]
@@ -369,9 +346,6 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_d
     
     # Count incidence by indication, month, year
     concomit_by_indication<-RAM_concomit_data[,.N, by = .(year,month, indication)]
-    
-    # TROUBLESHOOTING
-    print(paste("unique indications concomit:", unique(concomit_by_indication$indication)))
     
     for(group in 1:length(unique(concomit_by_indication$indication))){
       # Create a subset of age group
@@ -410,10 +384,7 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_d
   
   # contraindicated 
   RAM_contra_data<-RAM_concomit_data[ATC.RAM %in%contraindicated_codes,]
-  
-  # TROUBLESHOOTING
-  print(paste("RAM Contra:",nrow(RAM_contra_data) , "rows"))
-  
+
   if(nrow(RAM_contra_data)>0){
     ## RAM contra counts
     RAM_contra_rates<-RAM_contra_data[,.N, by = .(year,month)]
@@ -435,8 +406,6 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_d
     
     # Count incidence by indication, month, year
     contra_by_indication<-RAM_contra_data[,.N, by = .(year,month, indication)]
-    # TROUBLESHOOTING
-    print(paste("unique indications contra:", unique(contra_by_indication$indication)))
     
     for(group in 1:length(unique(contra_by_indication$indication))){
       # Create a subset of age group
@@ -468,7 +437,8 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_d
       
     }
   } else {
-    print(paste("There are no contra files for", regions[reg], pop_prefix))
+    if(is_BIFAP){print(paste("There are no contra files for", regions[reg], pop_prefix))}
+    if(is_PHARMO){print("There are no contra files")}
     # Flowchart
     RAM_flowchart_concomit_contraindicated_records<-0
     RAM_flowchart_concomit_contraindicated_users<-0
@@ -478,7 +448,8 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_d
     
   }
 } else {
-  print(paste("There is no concomitant data for", regions[reg], pop_prefix))
+  if(is_BIFAP){print(paste("There is no concomitant data for", regions[reg], pop_prefix))}
+  if(is_PHARMO){print("There is no concomitant data")}
   # Flowchart
   RAM_flowchart_concomit_contraindicated_records<-0
   RAM_flowchart_concomit_contraindicated_users<-0
@@ -495,9 +466,6 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_d
 if (file.exists(paste0(objective4_temp_dir, pop_prefix, "_RAM_meds_teratogenic.rds"))){
   
   RAM_teratogenic_data<-as.data.table(readRDS(paste0(objective4_temp_dir, pop_prefix, "_RAM_meds_teratogenic.rds")))
-  
-  # TROUBLESHOOTING
-  print(paste("RAM Teratogenic:",nrow(RAM_teratogenic_data) , "rows"))
   
   if(nrow(RAM_teratogenic_data)>0){
     # Drop unneeded columns
@@ -530,9 +498,6 @@ if (file.exists(paste0(objective4_temp_dir, pop_prefix, "_RAM_meds_teratogenic.r
     # Count incidence by indication, month, year
     teratogenic_by_indication<-RAM_teratogenic_data[,.N, by = .(year,month, indication)]
     
-    # TROUBLESHOOTING
-    print(paste("unique indications teratogenic:", unique(teratogenic_by_indication$indication)))
-    
     for(group in 1:length(unique(teratogenic_by_indication$indication))){
       # Create a subset of age group
       each_group<-teratogenic_by_indication[indication==unique(teratogenic_by_indication$indication)[group]]
@@ -564,7 +529,8 @@ if (file.exists(paste0(objective4_temp_dir, pop_prefix, "_RAM_meds_teratogenic.r
     }
   }
 } else {
-  print(paste("There is no teratogenic data for", regions[reg], pop_prefix))
+  if(is_BIFAP){print(paste("There is no teratogenic data for", regions[reg], pop_prefix))}
+  if(is_PHARMO){print("There is no teratogenic data")}
   # Flowchart
   RAM_flowchart_teratogenic_records<-0
   RAM_flowchart_teratogenic_users<-0
