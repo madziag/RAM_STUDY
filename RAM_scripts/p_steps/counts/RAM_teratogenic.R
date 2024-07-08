@@ -1,32 +1,32 @@
+#############################################################################################
+################################## Data Preparation #########################################
+#############################################################################################
+### Data Loading
+# RAM prescriptions 
+RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
+# Get RAM meds in Retinoid population only 
+# Rename ATC columns in both Retinoid and RAM population 
+setnames(RAM_meds,"Code", "ATC.RAM", skip_absent = TRUE)
 
-if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_data.rds"))) {
-  #############################################################################################
-  ################################## Data Preparation #########################################
-  #############################################################################################
-  ### Data Loading
-  # RAM prescriptions 
-  RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
-  # Get RAM meds in Retinoid population only 
-  # Rename ATC columns in both Retinoid and RAM population 
-  setnames(RAM_meds,"Code", "ATC.RAM", skip_absent = TRUE)
-  
-  # Keep RAM meds that occur in Retinoid users only, and only if RAM prescriptions occur after Retinoid incidence use
-  # Read in retinoid incidence data
-  retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
-  # Rename episode start column
-  setnames(retinoid_prevalence_data,"episode.start","episode.start.retinoid") 
-  # Get first retinoid use in entry into study (could be incidence or prevalent use)
-  retinoid_prevalence_data<-unique(retinoid_prevalence_data, by=c("person_id"))
-  # Merge retinoid prevalence data with RAM meds
-  # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-  RAM_meds<-merge(retinoid_prevalence_data[,c("person_id","episode.start.retinoid")],RAM_meds,by="person_id")
-  # Keep RAM_meds that occurred after the start of a Retinoid 
-  RAM_meds<-RAM_meds[Date>=episode.start.retinoid,]
-  
-  # Create year-months columns based on episode.day
-  RAM_meds[,year:=year(Date)][,month:=month(Date)][,episode.start.retinoid:=NULL]
-  # Get contraindicated ATC subset
-  RAM_meds_teratogenic<-RAM_meds[ATC.RAM %in% teratogenic_codes,]
+# Keep RAM meds that occur in Retinoid users only, and only if RAM prescriptions occur after Retinoid incidence use
+# Read in retinoid incidence data
+retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
+# Rename episode start column
+setnames(retinoid_prevalence_data,"episode.start","episode.start.retinoid") 
+# Get first retinoid use in entry into study (could be incidence or prevalent use)
+retinoid_prevalence_data<-unique(retinoid_prevalence_data, by=c("person_id"))
+# Merge retinoid prevalence data with RAM meds
+# Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
+RAM_meds<-merge(retinoid_prevalence_data[,c("person_id","episode.start.retinoid")],RAM_meds,by="person_id")
+# Keep RAM_meds that occurred after the start of a Retinoid 
+RAM_meds<-RAM_meds[Date>=episode.start.retinoid,]
+
+# Create year-months columns based on episode.day
+RAM_meds[,year:=year(Date)][,month:=month(Date)][,episode.start.retinoid:=NULL]
+# Get contraindicated ATC subset
+RAM_meds_teratogenic<-RAM_meds[ATC.RAM %in% teratogenic_codes,]
+
+if (nrow(RAM_meds_teratogenic)>0) { 
   
   saveRDS(RAM_meds_teratogenic,paste0(objective4_temp_dir, pop_prefix, "_RAM_meds_teratogenic.rds"))
   
@@ -130,10 +130,9 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # Clean up 
   rm(list = grep("age_group|each_group|RAM_concomit|RAM_meds|RAM_rates|RAM_teratogenic", ls(), value = TRUE))
   
+  
 } else {
   print("There are no records for retinoid-RAM concomitance")
-  RAM_flowchart_allRAM_users<-0
-  RAM_flowchart_allRAM_records<-0
   RAM_flowchart_teratogenic_users<-0
   RAM_flowchart_teratogenic_records<-0
 }

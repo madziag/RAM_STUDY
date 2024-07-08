@@ -39,7 +39,7 @@ if(is_BIFAP){RAMs_in_studypop[,period:=ifelse(rx_year_month<"2018-07","pre","pos
 RAM_record_counts<-RAMs_in_studypop[,.N, by = .(ATC.RAM,period)]
 # Change table format form long to wide
 RAM_record_counts<-dcast(RAM_record_counts, ATC.RAM~period, value.var = "N")
-if("pre"%!in%colnames(RAM_record_counts)){RAM_record_counts[,pre:=0]}
+if("pre"%!in%colnames(RAM_record_counts)) {RAM_record_counts[,pre :=0]}
 if("post"%!in%colnames(RAM_record_counts)){RAM_record_counts[,post:=0]}
   
 RAM_record_counts[is.na(post),post:=0][is.na(pre),pre:=0]
@@ -53,7 +53,7 @@ RAMs_in_studypop_unique<-unique(RAMs_in_studypop,by=c("person_id","ATC.RAM","per
 RAM_user_counts<-RAMs_in_studypop_unique[,.N, by = .(ATC.RAM,period)]
 # Change table format form long to wide
 RAM_user_counts<-dcast(RAM_user_counts, ATC.RAM~period, value.var = "N")
-if("pre"%!in%colnames(RAM_user_counts)){RAM_user_counts[,pre:=0]}
+if("pre"%!in%colnames(RAM_user_counts)) {RAM_user_counts[,pre :=0]}
 if("post"%!in%colnames(RAM_user_counts)){RAM_user_counts[,post:=0]}
 # If value is missing, change to 0
 RAM_user_counts[is.na(post),post:=0][is.na(pre),pre:=0]
@@ -91,8 +91,8 @@ RAM_record_counts_per_indication<-RAM_data_per_indication_all[,.N, by = .(ATC.RA
 # Change table format form long to wide
 RAM_record_counts_per_indication1<-dcast(RAM_record_counts_per_indication, ATC.RAM+indication~period, value.var = "N")
 
-if("pre"%!in%colnames(RAM_record_counts_per_indication1)){RAM_record_counts_per_indication1[,pre:=0]}
-if("post"%!in%colnames(RAM_record_counts_per_indication1)){RAM_record_counts_per_indication1}
+if("pre"%!in%colnames (RAM_record_counts_per_indication1)){RAM_record_counts_per_indication1[,pre :=0]}
+if("post"%!in%colnames(RAM_record_counts_per_indication1)){RAM_record_counts_per_indication1[,post:=0]}
 
 RAM_record_counts_per_indication1[is.na(post),post:=0][is.na(pre),pre:=0]
 # Rearrange columns
@@ -116,8 +116,8 @@ RAM_record_counts_per_indication_unique<-RAM_data_per_indication_all_unique[,.N,
 # Change table format form long to wide
 RAM_record_counts_per_indication1_unique<-dcast(RAM_record_counts_per_indication, ATC.RAM+indication~period, value.var = "N")
 
-if("pre"%!in%colnames(RAM_record_counts_per_indication1_unique)){RAM_record_counts_per_indication1_unique[,pre:=0]}
-if("post"%!in%colnames(RAM_record_counts_per_indication1_unique)){RAM_record_counts_per_indication1_unique}
+if("pre"%!in%colnames(RAM_record_counts_per_indication1_unique)) {RAM_record_counts_per_indication1_unique[,pre :=0]}
+if("post"%!in%colnames(RAM_record_counts_per_indication1_unique)){RAM_record_counts_per_indication1_unique[,post:=0]}
 
 RAM_record_counts_per_indication1_unique[is.na(post),post:=0][is.na(pre),pre:=0]
 # Rearrange columns
