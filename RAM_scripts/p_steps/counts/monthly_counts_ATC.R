@@ -33,8 +33,6 @@ if(length(med_files)>0){
     meds_prefix<-gsub(".csv", "", med_files[y]) 
     # Load current table 
     df<-fread(paste(path_dir, med_files[y], sep=""), stringsAsFactors = FALSE) #load table
-    print("###################################################")
-    print(paste("Number_of_rows_of_df_loaded", nrow(df)))
     # Data Cleaning
     df<-df[,c("person_id", "medicinal_product_atc_code", "date_dispensing", "date_prescription", "meaning_of_drug_record", "presc_duration_days", "disp_number_medicinal_product", "presc_quantity_per_day", "medicinal_product_id")] #keep only necessary columns
     df<-df[,lapply(.SD, FUN=function(x) gsub("^$|^ $", NA, x))] #replace any missing values with NA
@@ -54,23 +52,12 @@ if(length(med_files)>0){
     df[,person_id:=as.character(person_id)] #person_id converted to data type character 
     study_population[,person_id:=as.character(person_id)]#person_id converted to data type character 
     df<-df[study_population,on=.(person_id)] # Left join, keeps all people in the study population even if they didn't have an event
-    print("###################################################")
-    print(meds_prefix)
-    print("###################################################")
-    print(paste("Number_of_rows_of_df_merged_with_studypop", nrow(df)))
     df<-df[!rowSums(is.na(df[,..colnames_events]))==length(colnames_events)] #removes records with missing values in the medicine table 
-    print("###################################################")
-    print("presc_duration_days-unique values BEFORE=>")
-    print(unique(df$presc_duration_days))
     # Adjust column data types 
     df[presc_duration_days == ".", presc_duration_days := NA]
     df[,presc_duration_days:=as.numeric(presc_duration_days)]
     # df[,age_start_follow_up:=as.numeric(age_start_follow_up)]
     # df[,disp_number_medicinal_product:=as.integer(disp_number_medicinal_product)][,medicinal_product_id:=as.integer(medicinal_product_id)]
-    
-    print("###################################################")
-    print("presc_duration_days-unique values AFTER=>")
-    print(unique(df$presc_duration_days))
     df[,Code:=as.character(Code)]
     df[,Date:=as.IDate(Date,"%Y%m%d")][,entry_date:=as.IDate(entry_date,"%Y%m%d")] 
     
@@ -79,22 +66,10 @@ if(length(med_files)>0){
     
     # Filter out records that have year or ATC missing and are not within years used in study 
     df<-df[!is.na(year),]
-    print("###################################################")
-    print(paste("Number_of_rows_of_df_missing_year_removed", nrow(df)))
     df<-df[!is.na(Code),]
-    print("###################################################")
-    print(paste("Number_of_rows_of_df_missing_code_removed", nrow(df)))
     if(is_PHARMO){df<-df[year>2008 & year<2020]} else {df<-df[year>2008 & year<2021]} 
-    print("###################################################")
-    print(paste("Number_of_rows_of_df_between_2008_2020", nrow(df)))
     # Filter out records with unspecified sex
     df<-df[sex_at_instance_creation=="M"|sex_at_instance_creation=="F"]
-    print("###################################################")
-    print(paste("Number_of_rows_of_df_unspecifed_sex_removed", nrow(df)))
-    # Prints Message
-    print("###################################################")
-    print(paste0("Finding matching records in ", med_files[y]))
-
     # Looking for ATC matches in Current Medicines Table 
     #checks first if df has at least one row of records
     if(nrow(df)>0){
@@ -102,10 +77,7 @@ if(length(med_files)>0){
       for (i in 1:length(codelist_all)){
         df_subset<-setDT(df)[Code %chin% codelist_all[[i]][,Code]]#creates subset with current ATC code group being checked i.e. retinoids, and each RAM group 
         df_subset<-df_subset[!duplicated(df_subset),]# removes any duplicates 
-        print("###################################################")
-        print(paste("Number_of_rows_of_df_subset",names(codelist_all[i]) ,nrow(df_subset)))
         if(nrow(df_subset)<=0){print(paste("There are NO records for", names(codelist_all[i])))}
-        if(nrow(df_subset)>0){print(paste("saving subset for",names(codelist_all[i]), "in", events_tmp_ATC))}
         saveRDS(data.table(df_subset), paste0(events_tmp_ATC, pop_prefix,"_", names(codelist_all[i]), "_",meds_prefix, ".rds")) #save the subset into events folder 
       }
     } 
@@ -118,10 +90,6 @@ if(length(med_files)>0){
   # For each Retinoid-RAM group
   for(j in 1:length(codelist_all)){
     files<-list.files(path=events_tmp_ATC, pattern=names(codelist_all[j]))#list of files in current code group
-    # TESTING
-    print("###################################################")
-    print(names(codelist_all[j]))
-    print(paste("Created files:", files))
     #checks that there is at least on file in the list
     if (length(files)>0){
       # Load and bind all data in the same code group

@@ -422,7 +422,7 @@ if(length(proc_files)>0){
     }
   }
 } else {
-  print("There are no PROCEDUREStable available")
+  print("There are no PROCEDURES table available")
 }
 #################################################################################################################
 ################################# 4. BINDS ALL FOUND STERILITY RECORDS###########################################
