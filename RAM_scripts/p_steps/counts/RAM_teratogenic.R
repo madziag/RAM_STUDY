@@ -76,7 +76,7 @@ if (nrow(RAM_meds_teratogenic)>0) {
   # Keeps necessary columns 
   RAM_teratogenic_rates_per_user<-RAM_teratogenic_rates_per_user[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
   # Saves files in medicine counts folder
-  saveRDS(RAM_teratogenic_rates_per_user, paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_user.rds")) 
+  saveRDS(RAM_teratogenic_rates_per_user, paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_user_counts.rds")) 
   
   #############################################################################################
   ##### Per Records ##############################################################################
@@ -125,7 +125,7 @@ if (nrow(RAM_meds_teratogenic)>0) {
   # Keeps necessary columns 
   RAM_teratogenic_rates_per_record<-RAM_teratogenic_rates_per_record[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
   # Saves files in medicine counts folder
-  saveRDS(RAM_teratogenic_rates_per_record, paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_record.rds")) 
+  saveRDS(RAM_teratogenic_rates_per_record, paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_record_counts.rds")) 
   
   # Clean up 
   rm(list = grep("age_group|each_group|RAM_concomit|RAM_meds|RAM_rates|RAM_teratogenic", ls(), value = TRUE))

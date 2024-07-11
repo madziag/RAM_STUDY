@@ -433,7 +433,7 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_d
       indication_contra_count<-indication_contra_count[,c("YM","N","Freq","rates","masked")]
       
       # Save files in medicine counts folder
-      saveRDS(indication_contra_count, (paste0(objective3_strat_dir,"/", pop_prefix,"_RAM_general_concomitance_contraindicated_counts_", unique(contra_by_indication$indication)[group],"_indication_group.rds")))
+      saveRDS(indication_contra_count, (paste0(objective3_strat_dir,"/", pop_prefix,"_RAM_contraindicated_in_concomitance_counts_", unique(contra_by_indication$indication)[group],"_indication_group.rds")))
       
     }
   } else {

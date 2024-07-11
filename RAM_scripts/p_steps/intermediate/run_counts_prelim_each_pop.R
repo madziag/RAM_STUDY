@@ -29,6 +29,8 @@ for(pop in 1:length(populations)){
   source(paste0(pre_dir,"denominators/denominator_monthly_retinoid_users.R"))
   # Flowchart
   source(paste0(pre_dir,"flowchart_base_population.R"))
+  # Flowchart
+  # source(paste0(pre_dir,"plots/plots_mask.R"))
 }
 
 # Moves all counts, plots, formatted files to preliminary_counts folder

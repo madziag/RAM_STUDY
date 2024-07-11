@@ -59,7 +59,7 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # Keeps necessary columns 
   RAM_concomit_rates_contraindicated_per_user<-RAM_concomit_rates_contraindicated_per_user[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
   # Saves files in medicine counts folder
-  saveRDS(RAM_concomit_rates_contraindicated_per_user, paste0(objective3_dir,"/", pop_prefix, "_RAM_contraindicated_users_in_concomitance.rds")) 
+  saveRDS(RAM_concomit_rates_contraindicated_per_user, paste0(objective3_dir,"/", pop_prefix, "_RAM_contraindicated_users_in_concomitance_counts.rds")) 
   
   #############################################################################################
   ##### Per Record ##############################################################################
@@ -116,7 +116,7 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_da
   # Keeps necessary columns 
   RAM_concomit_rates_contraindicated_per_record<-RAM_concomit_rates_contraindicated_per_record[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
   # Saves files in medicine counts folder
-  saveRDS(RAM_concomit_rates_contraindicated_per_record, paste0(objective3_dir,"/", pop_prefix, "_RAM_contraindicated_records_in_concomitance.rds")) 
+  saveRDS(RAM_concomit_rates_contraindicated_per_record, paste0(objective3_dir,"/", pop_prefix, "_RAM_contraindicated_records_in_concomitance_counts.rds")) 
   
 } else {
   

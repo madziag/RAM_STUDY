@@ -51,7 +51,8 @@ for(pop in 1:length(populations)){
     source(paste0(pre_dir,"counts/IndividualRAMCounts.R"))
     # flow chart 
     source(paste0(pre_dir,"flowchart.R"))
-    #source(paste0(pre_dir, "plots_mask.R"))
+    # plots
+    # source(paste0(pre_dir, "plots/plots_mask.R"))
     # Converts all .rds files into .csv or .xlsx (indicated by user)
     #source(paste0(pre_dir, "write_output.R"))
   } else {
