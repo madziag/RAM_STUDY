@@ -475,7 +475,7 @@ if (file.exists(paste0(objective4_temp_dir, pop_prefix, "_RAM_meds_teratogenic.r
     # Get unique values 
     RAM_teratogenic_data<-unique(RAM_teratogenic_data)
     ## RAM teratogenic counts
-    RAM_teratogenic_counts<-as.data.table(readRDS(paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_record.rds")))
+    RAM_teratogenic_counts<-as.data.table(readRDS(paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_per_record_counts.rds")))
     
     # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
     RAM_teratogenic_data<-retinoid_prevalence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_teratogenic_data,on=.(person_id)]
