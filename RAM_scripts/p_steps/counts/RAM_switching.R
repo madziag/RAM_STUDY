@@ -24,7 +24,7 @@
 #############################################################################################
 ### Data Loading
 ## RAM Prevalent Data 
-RAM_prevalence_data<-as.data.table(readRDS(paste0(objective1_temp_dir, pop_prefix,"_RAM_prevalence_data.rds")))
+RAM_incidence_data<-as.data.table(readRDS(paste0(objective1_temp_dir, pop_prefix,"_RAM_incidence_data.rds")))
 ## Retinoid Discontinuation data 
 retinoid_discontinued_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_discontinued_data.rds")))
 ## Denominators 
@@ -33,17 +33,16 @@ retinoid_prevalence_counts<-as.data.table(readRDS(paste0(medicines_counts_dir, "
 # Retinoid Discontinued Counts 
 retinoid_discontinued_counts<-as.data.table(readRDS(paste0(medicines_counts_dir, "/",pop_prefix, "_Retinoid_discontinued_counts.rds")))
 
-
 ### Data Cleaning 
 ## RAM prevalent data
 # Drop unneeded columns
-RAM_prevalence_data<-RAM_prevalence_data[,c("person_id", "episode.start", "episode.end",  "ATC.RAM", "birth_date", "entry_date", "exit_date")]
+RAM_incidence_data<-RAM_incidence_data[,c("person_id", "episode.start", "episode.end",  "ATC.RAM", "birth_date", "entry_date", "exit_date")]
 # Change date format
-RAM_prevalence_data[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
+RAM_incidence_data[,episode.start:=as.IDate(episode.start)][,episode.end:=as.IDate(episode.end)][,entry_date:=as.IDate(entry_date)][,exit_date:=as.IDate(exit_date)]
 # Rename columns
-setnames(RAM_prevalence_data, old = c("episode.start","episode.end"), new = c("episode.start.RAM","episode.end.RAM"))
+setnames(RAM_incidence_data, old = c("episode.start","episode.end"), new = c("episode.start.RAM","episode.end.RAM"))
 # Remove duplicates
-RAM_prevalence_data<-unique(RAM_prevalence_data, by = c("person_id", "episode.start.RAM", "episode.end.RAM", "ATC.RAM"))
+RAM_incidence_data<-unique(RAM_incidence_data, by = c("person_id", "episode.start.RAM", "episode.end.RAM", "ATC.RAM"))
 
 ## Retinoid Discontinuation data
 retinoid_discontinued_data<-retinoid_discontinued_data[,c("person_id", "episode.start", "episode.end", "ATC.retinoid")]
@@ -65,7 +64,7 @@ retinoid_discontinued_counts<-retinoid_discontinued_counts[,c("YM", "N")]
 setnames(retinoid_discontinued_counts,"N", "Freq")
 
 ### Merge Retinoid and RAM to compare treatment periods 
-RAM_retinoid_use<-merge(RAM_prevalence_data, retinoid_discontinued_data, by="person_id", allow.cartesian=TRUE)
+RAM_retinoid_use<-merge(RAM_incidence_data, retinoid_discontinued_data, by="person_id", allow.cartesian=TRUE)
 RAM_retinoid_use<-RAM_retinoid_use[episode.start.RAM>=entry_date & episode.start.RAM<=exit_date,]
 
 # Get the switchers
@@ -114,7 +113,7 @@ if(nrow(RAM_switcher)>0){
   # Denominator => Number of prevalent RAM users that month
   RAM_switcher_rates1<-merge(x = RAM_switcher_counts, y = retinoid_prevalence_counts, by = c("YM"), all.x = TRUE)
   # Calculates rates
-  RAM_switcher_rates1<-RAM_switcher_rates1[,rates:=round(as.numeric(N)/as.numeric(Freq),5)][,rates:=rates*1000][is.nan(rates)|is.na(rates), rates:=0]
+  RAM_switcher_rates1<-RAM_switcher_rates1[,rates:=round(as.numeric(N)/as.numeric(Freq),5)][,rates:=rates*100][is.nan(rates)|is.na(rates), rates:=0]
   # Keeps necessary columns 
   RAM_switcher_rates1<-RAM_switcher_rates1[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
   # Saves files in medicine counts folder
@@ -126,7 +125,7 @@ if(nrow(RAM_switcher)>0){
   # Denominator => Number of discontinued users that month
   RAM_switcher_rates2<-merge(x = RAM_switcher_counts, y = retinoid_discontinued_counts, by = c("YM"), all.x = TRUE)
   # Calculates rates
-  RAM_switcher_rates2<-RAM_switcher_rates2[,rates:=round(as.numeric(N)/as.numeric(Freq),5)][,rates:=rates*1000][is.nan(rates)|is.na(rates), rates:=0]
+  RAM_switcher_rates2<-RAM_switcher_rates2[,rates:=round(as.numeric(N)/as.numeric(Freq),5)][,rates:=rates*100][is.nan(rates)|is.na(rates), rates:=0]
   # Keeps necessary columns 
   RAM_switcher_rates2<-RAM_switcher_rates2[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
   # Saves files in medicine counts folder

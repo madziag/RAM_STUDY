@@ -64,8 +64,10 @@ DAP_specific_DOT<-T   #### assumed treatment duration for creating treatment epi
 #################################################
 source(paste0(pre_dir,"intermediate/run_counts_final.R"))
 
-# BIFAP ONLY pooled masking
-# run_pooling(mask= T)
+# BIFAP ONLY! Pool baseline tables!
+source(paste0(pre_dir,"baseline/pool_baseline_tables_BIFAP.R"))
+
+
 ###########################################
 # clear g_intermediate 
 #set to TRUE to clear out intermediate files PLEASE REPLACE T WITH F IF YOU WANT TO SAVE INTERMEDIATE DATA SETS, I.E. TO REDUCE AMOUNT OF STORED DATA"

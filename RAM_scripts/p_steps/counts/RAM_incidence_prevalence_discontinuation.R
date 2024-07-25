@@ -295,7 +295,7 @@ setnames(RAM_prevalence_counts1, "N", "Freq")
 ### Merges numerator file with denominator file
 RAM_discontinued_rates<-merge(x=RAM_discontinued_counts,y=RAM_prevalence_counts1,by=c("YM"),all.x=TRUE)
 # Calculates rates
-RAM_discontinued_rates<-RAM_discontinued_rates[,rates:=round(as.numeric(N)/as.numeric(Freq),5)][,rates:=rates*1000][is.nan(rates)|is.na(rates),rates:=0]
+RAM_discontinued_rates<-RAM_discontinued_rates[,rates:=round(as.numeric(N)/as.numeric(Freq),5)][,rates:=rates*100][is.nan(rates)|is.na(rates),rates:=0]
 # Keeps necessary columns 
 RAM_discontinued_rates<-RAM_discontinued_rates[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
 # Saves files in medicine counts folder
