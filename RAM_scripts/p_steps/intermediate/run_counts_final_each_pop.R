@@ -45,8 +45,10 @@ for(pop in 1:length(populations)){
     source(paste0(pre_dir, "counts/RAM_teratogenic.R"))
     # Counts by indication
     source(paste0(pre_dir, "counts/counts_by_indication.R"))
-    # Creates baseline tables #
+    # Creates baseline tables - RAM in Retinoid Users#
     source(paste0(pre_dir, "baseline/baseline_tables.R"))
+    # Creates baseline tables - RAM in Retinoid Users#
+    source(paste0(pre_dir, "baseline/baseline_tables_WOCBP.R"))
     # general counts 
     source(paste0(pre_dir,"counts/IndividualRAMCounts.R"))
     # flow chart 

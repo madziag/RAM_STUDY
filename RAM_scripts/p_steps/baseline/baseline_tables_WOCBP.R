@@ -1,48 +1,36 @@
-# Read in retinoid prevalence data
-retinoid_prevalence_data<-as.data.table(readRDS(paste0(retinoid_counts_dfs, pop_prefix,"_Retinoid_prevalence_data.rds")))
-# Rename episode start column
-setnames(retinoid_prevalence_data, old=c("episode.start", "episode.day"), new=c("episode.start.retinoid", "episode.day.retinoid")) 
-# Get first retinoid use in entry into study (could be incidence or prevalent use)
-retinoid_prevalence_data<-unique(retinoid_prevalence_data, by=c("person_id"))
+# Load study population 
+study_population <- as.data.table(readRDS(paste0(populations_dir,pop_prefix,"_study_population.rds")))
 
-# Load Retinoid Study Population (already loaded)
 # Correct date format
-retinoid_study_population[,entry_date:=as.IDate(entry_date,"%Y%m%d")][,exit_date:=as.IDate(exit_date,"%Y%m%d")][,birth_date:=as.IDate(birth_date,"%Y%m%d")]
+study_population[,entry_date:=as.IDate(entry_date,"%Y%m%d")][,exit_date:=as.IDate(exit_date,"%Y%m%d")][,birth_date:=as.IDate(birth_date,"%Y%m%d")]
 # Creates column in study population: fu_dur_days 
-retinoid_study_population[, fu_dur_days:=exit_date-entry_date]
+study_population[, fu_dur_days:=exit_date-entry_date]
 # Creates age variable in study population = entry_date - birth date  (# Rounds down)
-retinoid_study_population[,age_at_entry_date:=floor((entry_date-birth_date)/365.25)]
-retinoid_study_population[,age_groups:=ifelse(retinoid_study_population[,age_at_entry_date>= 12&age_at_entry_date<21],"12-20.99", 
-                                              ifelse(retinoid_study_population[,age_at_entry_date>=21&age_at_entry_date<31],"21-30.99",
-                                                     ifelse(retinoid_study_population[,age_at_entry_date>=31&age_at_entry_date<41],"31-40.99",
-                                                            ifelse(retinoid_study_population[,age_at_entry_date>=41&age_at_entry_date<56],"41-55.99","Not in range"))))]
+study_population[,age_at_entry_date:=floor((entry_date-birth_date)/365.25)]
+# Create Age Groups
+study_population[,age_groups:=ifelse(study_population[,age_at_entry_date>= 12&age_at_entry_date<21],"12-20.99", 
+                                              ifelse(study_population[,age_at_entry_date>=21&age_at_entry_date<31],"21-30.99",
+                                                     ifelse(study_population[,age_at_entry_date>=31&age_at_entry_date<41],"31-40.99",
+                                                            ifelse(study_population[,age_at_entry_date>=41&age_at_entry_date<56],"41-55.99","Not in range"))))]
 
 # Load RAM medications 
 RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(medications_pop, list.files(medications_pop, pattern=paste0(pop_prefix, "_altmed"))), readRDS)))
-RAM_meds<-retinoid_prevalence_data[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_meds,on=.(person_id)]
 
 # Keep records where RAM date is after retinoid date and RAM date falls within entry and exit dates 
-RAM_meds<-RAM_meds[Date>=episode.start.retinoid & Date>=entry_date-90 & Date<=exit_date,c("person_id","ATC.retinoid","Code","Date","episode.start.retinoid")]
-# Get RAM meds in Retinoid users 
-RAM_meds_in_retinoid_users<-retinoid_study_population[,c("person_id","birth_date","entry_date","exit_date","fu_dur_days","age_at_entry_date","age_groups")][RAM_meds,on=.(person_id)]
-# Create subsets for each of the indications - based on the Retinoid not RAM
-RAM_psoriasis<-RAM_meds_in_retinoid_users[ATC.retinoid=="D05BB02",][,indication:="psoriasis"]
-RAM_acne<-RAM_meds_in_retinoid_users[ATC.retinoid=="D10BA01",][,indication:="acne"]
-RAM_dermatitis<-RAM_meds_in_retinoid_users[ATC.retinoid=="D11AH04",][,indication:="dermatitis"]
+RAM_meds<-RAM_meds[Date>=entry_date-90 & Date<=exit_date,]
+
+# Get fu duration and age groups from study population
+RAM_meds_in_WOCBP<-study_population[,c("person_id","birth_date","entry_date","exit_date","fu_dur_days","age_at_entry_date","age_groups")][RAM_meds,on=.(person_id)]
 
 # Remove duplicates for each group 
-# retinoid study population # already deduplicated 
-# All RAM's in retinoid users 
-RAM_meds_in_retinoid_users_unique<-unique(RAM_meds_in_retinoid_users,by="person_id")
-# Psoriasis 
-RAM_psoriasis_unique<-unique(RAM_psoriasis,by="person_id")       
-# Acne
-RAM_acne_unique<-unique(RAM_acne,by="person_id")    
-# Dermatitis
-RAM_dermatitis_unique<-unique(RAM_dermatitis,by="person_id")    
+# study population # 
+study_population_unique <- unique(study_population, by="person_id")
+# All RAM's in WOCBP
+RAM_meds_in_WOCBP_unique<-unique(RAM_meds_in_WOCBP,by="person_id")
+
 # Create a list of all the data you want baseline tables for 
-Pops_for_baseline_tables<-list(retinoid_study_population, RAM_meds_in_retinoid_users_unique, RAM_psoriasis_unique, RAM_acne_unique, RAM_dermatitis_unique)
-names(Pops_for_baseline_tables)<-c("Retinoid_study_population", "RAM_retinoid_users","RAM_Psoriasis_retinoid_users","RAM_Acne_retinoid_users", "RAM_Dermatitis_retinoid_users")
+Pops_for_baseline_tables<-list(study_population_unique, RAM_meds_in_WOCBP_unique)
+names(Pops_for_baseline_tables)<-c("WOCBP_study_population", "RAM_WOCBP")
 # For each of the Populations 
 for (i in 1:length(Pops_for_baseline_tables)){
   df<-Pops_for_baseline_tables[[i]]

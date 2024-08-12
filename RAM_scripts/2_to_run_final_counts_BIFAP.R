@@ -14,8 +14,8 @@ setwd(projectFolder)
 ### NOTE FOR DAPS: If you have run the preselection script and would like to use the subsetted data sets that it produces instead of your full ETL'd data files, you need to go to the "99_path.R" file and choose the second path option, by adding a "#" symbol at the start of line 7, and removing the "#" symbol at the start of line 8. If the preselection files have been stored elsewhere, then the path will need to be set manually.
 
 ### Please indicate DAP NAME 
-# DAP_name<-"BIFAP"
-DAP_name<-"PHARMO"
+DAP_name<-"BIFAP"
+# DAP_name<-"PHARMO"
 #user input parameter
 
 ### Below you must set
@@ -29,14 +29,14 @@ study_type<-"Retinoid"
 
 #user input parameter
 ## Turn statement to T if multiple regions #BIFAP
-multiple_regions<-F
-# multiple_regions<-T # BIFAP
-# multiple_regions_dir<-paste0(path_dir, "BIFAP/")
+# multiple_regions<-F
+multiple_regions<-T # BIFAP
+multiple_regions_dir<-paste0(path_dir, "BIFAP/")
 
 # #user input parameter
 ## Turn the statement to T instead of = F if data has sub populations #BIFAP
-SUBP<-F
-# SUBP<-T
+# SUBP<-F
+SUBP<-T
 
 #user input parameter
 ## MASKING 
@@ -63,9 +63,8 @@ DAP_specific_DOT<-T   #### assumed treatment duration for creating treatment epi
 # Final counts + plots
 #################################################
 source(paste0(pre_dir,"intermediate/run_counts_final.R"))
-
 # BIFAP ONLY! Pool baseline tables!
-source(paste0(pre_dir,"baseline/pool_baseline_tables_BIFAP.R"))
+if(is_BIFAP){source(paste0(pre_dir,"baseline/pool_baseline_tables_BIFAP.R"))}
 
 
 ###########################################
