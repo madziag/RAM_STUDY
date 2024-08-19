@@ -57,7 +57,7 @@ for (region in regions) {
   # Get the region name from the directory
   region_name<-basename(region)
   # List all .rds files in the current region directory
-  rds_files<-list.files(path=paste0(projectFolder,"/",region,"/g_intermediate/populations/"),pattern="retinoid_study_population",full.names=TRUE,recursive=TRUE)
+  rds_files<-list.files(path=paste0(projectFolder,"/",region,"/g_intermediate/populations/"),pattern="study_population",full.names=TRUE,recursive=TRUE)
   # Loop through each file in the current region directory
   for (file_path in rds_files) {
     # Extract the file name
@@ -118,7 +118,6 @@ for(file in retinoid_prev_files){
   # Rename variable based on population
   if(pop=="PC")      {PC_retinoid_first_use      <-retinoid_first_use}
   if(pop=="PC_HOSP") {PC_HOSP_retinoid_first_use <-retinoid_first_use}
-  if(pop=="ALL")     {ALL_retinoid_first_use     <-retinoid_first_use}
 }
 
 #####################################################################################################################
@@ -129,7 +128,7 @@ retinoid_study_pop_files<-list.files(paste0(projectFolder,"/pooled"),pattern= "r
 
 for(file in retinoid_study_pop_files){
   # Get population prefix
-  pop <-gsub("_retinoid_study_population_pooled.rds","", file)
+  pop<-gsub("_retinoid_study_population_pooled.rds","", file)
   # Read in file
   study_pop<-as.data.table(readRDS(paste0(projectFolder,"/pooled/",file)))
   # Check if there is at least one row of data
@@ -148,7 +147,7 @@ for(file in retinoid_study_pop_files){
     study_pop[is.na(age_groups),age_groups:="Not in range"]
     # Remove any duplicates
     study_pop<-unique(study_pop, by=c("person_id","birth_date"))
-
+    
     if(pop=="PC"){
       # Rename variable based on population
       PC_study_pop<-study_pop
@@ -156,8 +155,6 @@ for(file in retinoid_study_pop_files){
       PC_RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(projectFolder,"/pooled/", list.files(paste0(projectFolder,"/pooled/"), pattern="PC_altmed")), readRDS)))
       # Merge RAM's with Retinoid first use
       PC_RAM_meds<-PC_retinoid_first_use[,c("person_id","ATC.retinoid","episode.day.retinoid","episode.start.retinoid")][PC_RAM_meds,on=.(person_id)]
-      # Create subset which doesn't take retinoid use into consideration
-      # PC_RAM_meds_all<-PC_RAM_meds
       # Keep records where RAM date is after retinoid date and RAM date falls within entry and exit dates
       PC_RAM_meds_with_prior_retinoid_use<-PC_RAM_meds[Date>=episode.day.retinoid & Date>=entry_date-90 & Date<=exit_date,c("person_id","ATC.retinoid","Code","Date","episode.day.retinoid")]
       # Rename column names
@@ -174,7 +171,7 @@ for(file in retinoid_study_pop_files){
       PC_RAM_meds_with_prior_retinoid_use_acne_unique       <-unique(PC_RAM_meds_with_prior_retinoid_use_acne,by="person_id")
       PC_RAM_meds_with_prior_retinoid_use_dermatitis_unique <-unique(PC_RAM_meds_with_prior_retinoid_use_dermatitis,by="person_id")
     }
-
+    
     if(pop=="PC_HOSP"){
       # Rename variable based on population
       PC_HOSP_study_pop<-study_pop
@@ -182,8 +179,6 @@ for(file in retinoid_study_pop_files){
       PC_HOSP_RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(projectFolder,"/pooled/", list.files(paste0(projectFolder,"/pooled/"), pattern="PC_HOSP_altmed")), readRDS)))
       # Merge RAM's with Retinoid first use
       PC_HOSP_RAM_meds<-PC_HOSP_retinoid_first_use[,c("person_id","ATC.retinoid","episode.day.retinoid","episode.start.retinoid")][PC_HOSP_RAM_meds,on=.(person_id)]
-      # Create subset which doesn't take retinoid use into consideration
-      # PC_HOSP_RAM_meds_all<-PC_HOSP_RAM_meds
       # Keep records where RAM date is after retinoid date and RAM date falls within entry and exit dates
       PC_HOSP_RAM_meds_with_prior_retinoid_use<-PC_HOSP_RAM_meds[Date>=episode.day.retinoid & Date>=entry_date-90 & Date<=exit_date,c("person_id","ATC.retinoid","Code","Date","episode.day.retinoid")]
       # Rename column names
@@ -205,42 +200,164 @@ for(file in retinoid_study_pop_files){
   }
 }
 
+### For RAM MEDS all - needs WOCBP study population 
+# Get all WOCBP study populations
+WOCBP_study_pop_files<-list.files(paste0(projectFolder,"/pooled"),pattern= "study_population")
+#remove retinoid population
+WOCBP_study_pop_files<-WOCBP_study_pop_files[!grepl("retinoid", WOCBP_study_pop_files)]
+
+for(file in WOCBP_study_pop_files){
+  # Get population prefix
+  pop<-gsub("_study_population_pooled.rds","", file)
+  # Read in file
+  study_pop<-as.data.table(readRDS(paste0(projectFolder,"/pooled/",file)))
+  # Check if there is at least one row of data
+  if(nrow(study_pop)>0){
+    # Correct date format
+    study_pop[,entry_date:=as.IDate(entry_date,"%Y%m%d")][,exit_date:=as.IDate(exit_date,"%Y%m%d")][,birth_date:=as.IDate(birth_date,"%Y%m%d")]
+    # Creates column in study population: fu_dur_days
+    study_pop[,fu_dur_days:=exit_date-entry_date]
+    # Creates age variable in study population = entry_date - birth date  (# Rounds down)
+    study_pop[,age_at_entry_date:=floor((entry_date-birth_date)/365.25)]
+    # Create age groups
+    study_pop[age_at_entry_date>=12&age_at_entry_date<21,age_groups:="12-20.99"]
+    study_pop[age_at_entry_date>=21&age_at_entry_date<31,age_groups:="21-30.99"]
+    study_pop[age_at_entry_date>=31&age_at_entry_date<41,age_groups:="31-40.99"]
+    study_pop[age_at_entry_date>=41&age_at_entry_date<56,age_groups:="41-55.99"]
+    study_pop[is.na(age_groups),age_groups:="Not in range"]
+    # Remove any duplicates
+    study_pop<-unique(study_pop, by=c("person_id","birth_date"))
+    
+    if(pop=="PC"){
+      # Rename variable based on population
+      PC_study_pop<-study_pop
+      # Load all RAMs into 1 data frame
+      PC_RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(projectFolder,"/pooled/", list.files(paste0(projectFolder,"/pooled/"), pattern="PC_altmed")), readRDS)))
+      # Keep records where RAM date falls within entry and exit dates
+      PC_RAM_meds_within_entry_exit<-PC_RAM_meds[Date>=entry_date-90 & Date<=exit_date,c("person_id","Code","Date")]
+      # Rename column names
+      setnames(PC_RAM_meds_within_entry_exit, old=c("Code", "Date"), new=c("ATC.RAM", "RAM.rxdate"))
+      # Merge with study pop to get baseline characteristics
+      PC_RAM_meds_within_entry_exit<-PC_study_pop[,c("person_id","birth_date","entry_date","exit_date","fu_dur_days","age_at_entry_date","age_groups")][PC_RAM_meds_within_entry_exit,on=.(person_id)]
+      # Remove duplicates for each group
+      PC_RAM_meds_within_entry_exit <-unique(PC_RAM_meds_within_entry_exit,by="person_id")
+    }
+    
+    if(pop=="PC_HOSP"){
+      # Rename variable based on population
+      PC_HOSP_study_pop<-study_pop
+      # Load all RAMs into 1 data frame
+      PC_HOSP_RAM_meds<-as.data.table(do.call(rbind,lapply(paste0(projectFolder,"/pooled/", list.files(paste0(projectFolder,"/pooled/"), pattern="PC_HOSP_altmed")), readRDS)))
+      # Keep records where RAM date falls within entry and exit dates
+      PC_HOSP_RAM_meds_within_entry_exit<-PC_HOSP_RAM_meds[Date>=entry_date-90 & Date<=exit_date,c("person_id","Code","Date")]
+      # Rename column names
+      setnames(PC_HOSP_RAM_meds_within_entry_exit, old=c("Code", "Date"), new=c("ATC.RAM", "RAM.rxdate"))
+      # Merge with study pop to get baseline characteristics
+      PC_HOSP_RAM_meds_within_entry_exit<-PC_HOSP_study_pop[,c("person_id","birth_date","entry_date","exit_date","fu_dur_days","age_at_entry_date","age_groups")][PC_HOSP_RAM_meds_within_entry_exit,on=.(person_id)]
+      # Remove duplicates for each group
+      PC_HOSP_RAM_meds_within_entry_exit <-unique(PC_HOSP_RAM_meds_within_entry_exit,by="person_id")
+    }
+  } else {
+    print(paste0("There is no study population for subpop: ", pop))
+  }
+}
 
 #####################################################################################################################
 ######################### CREATE LIST FOR BASELINE TABLES #############################################
 #####################################################################################################################
 
-# Create a list of all the data you want baseline tables for
-Pops_for_baseline_tables<-list(PC_study_pop,
-                               PC_RAM_meds_with_prior_retinoid_use,
-                               PC_RAM_meds_with_prior_retinoid_use_psoriasis_unique,
-                               PC_RAM_meds_with_prior_retinoid_use_acne_unique,
-                               PC_RAM_meds_with_prior_retinoid_use_dermatitis_unique,
-                               # PC_RAM_meds_all,
+# Initialize an empty list and an empty vector for names
+Pops_for_baseline_tables <- list()
+names_list <- c()
 
-                               PC_HOSP_study_pop,
-                               PC_HOSP_RAM_meds_with_prior_retinoid_use,
-                               PC_HOSP_RAM_meds_with_prior_retinoid_use_psoriasis_unique,
-                               PC_HOSP_RAM_meds_with_prior_retinoid_use_acne_unique,
-                               PC_HOSP_RAM_meds_with_prior_retinoid_use_dermatitis_unique,
-                               # PC_HOSP_RAM_meds_all
-)
+# Check and add each variable if it exists
+if (exists("PC_study_pop")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_study_pop
+  names_list <- c(names_list, "PC_Retinoid_study_population")
+} else {
+  print("There is no PC_Retinoid_study_population")
+}
 
+if (exists("PC_RAM_meds_with_prior_retinoid_use")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_RAM_meds_with_prior_retinoid_use
+  names_list <- c(names_list, "PC_RAM_retinoid_users")
+} else {
+  print("There is no PC_RAM_retinoid_users")
+}
 
+if (exists("PC_RAM_meds_with_prior_retinoid_use_psoriasis_unique")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_RAM_meds_with_prior_retinoid_use_psoriasis_unique
+  names_list <- c(names_list, "PC_RAM_Psoriasis_retinoid_users")
+} else {
+  print("There is no PC_RAM_Psoriasis_retinoid_users")
+}
 
-names(Pops_for_baseline_tables)<-c("PC_Retinoid_study_population",
-                                   "PC_RAM_retinoid_users",
-                                   "PC_RAM_Psoriasis_retinoid_users",
-                                   "PC_RAM_Acne_retinoid_users",
-                                   "PC_RAM_Dermatitis_retinoid_users",
+if (exists("PC_RAM_meds_with_prior_retinoid_use_acne_unique")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_RAM_meds_with_prior_retinoid_use_acne_unique
+  names_list <- c(names_list, "PC_RAM_Acne_retinoid_users")
+} else {
+  print("There is no PC_RAM_Acne_retinoid_users")
+}
 
-                                   "PC_HOSP_Retinoid_study_population",
-                                   "PC_HOSP_RAM_retinoid_users",
-                                   "PC_HOSP_RAM_Psoriasis_retinoid_users",
-                                   "PC_HOSP_RAM_Acne_retinoid_users",
-                                   "PC_HOSP_RAM_Dermatitis_retinoid_users"
-                        
-)
+if (exists("PC_RAM_meds_with_prior_retinoid_use_dermatitis_unique")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_RAM_meds_with_prior_retinoid_use_dermatitis_unique
+  names_list <- c(names_list, "PC_RAM_Dermatitis_retinoid_users")
+} else {
+  print("There is no PC_RAM_Dermatitis_retinoid_users")
+}
+
+if (exists("PC_RAM_meds_within_entry_exit")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_RAM_meds_within_entry_exit
+  names_list <- c(names_list, "PC_RAM_meds_all")
+} else {
+  print("There is no PC_RAM_meds_all")
+}
+
+if (exists("PC_HOSP_study_pop")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_HOSP_study_pop
+  names_list <- c(names_list, "PC_HOSP_Retinoid_study_population")
+} else {
+  print("There is no PC_HOSP_Retinoid_study_population")
+}
+
+if (exists("PC_HOSP_RAM_meds_with_prior_retinoid_use")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_HOSP_RAM_meds_with_prior_retinoid_use
+  names_list <- c(names_list, "PC_HOSP_RAM_retinoid_users")
+} else {
+  print("There is no PC_HOSP_RAM_retinoid_users")
+}
+
+if (exists("PC_HOSP_RAM_meds_with_prior_retinoid_use_psoriasis_unique")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_HOSP_RAM_meds_with_prior_retinoid_use_psoriasis_unique
+  names_list <- c(names_list, "PC_HOSP_RAM_Psoriasis_retinoid_users")
+} else {
+  print("There is no PC_HOSP_RAM_Psoriasis_retinoid_users")
+}
+
+if (exists("PC_HOSP_RAM_meds_with_prior_retinoid_use_acne_unique")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_HOSP_RAM_meds_with_prior_retinoid_use_acne_unique
+  names_list <- c(names_list, "PC_HOSP_RAM_Acne_retinoid_users")
+} else {
+  print("There is no PC_HOSP_RAM_Acne_retinoid_users")
+}
+
+if (exists("PC_HOSP_RAM_meds_with_prior_retinoid_use_dermatitis_unique")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_HOSP_RAM_meds_with_prior_retinoid_use_dermatitis_unique
+  names_list <- c(names_list, "PC_HOSP_RAM_Dermatitis_retinoid_users")
+} else {
+  print("There is no PC_HOSP_RAM_Dermatitis_retinoid_users")
+}
+
+if (exists("PC_HOSP_RAM_meds_within_entry_exit")) {
+  Pops_for_baseline_tables[[length(Pops_for_baseline_tables) + 1]] <- PC_HOSP_RAM_meds_within_entry_exit
+  names_list <- c(names_list, "PC_HOSP_RAM_meds_all")
+} else {
+  print("There is no PC_HOSP_RAM_meds_all")
+}
+
+# Assign the names to the list
+names(Pops_for_baseline_tables) <- names_list
+
 
 
 ################################################################################################################
@@ -249,9 +366,9 @@ names(Pops_for_baseline_tables)<-c("PC_Retinoid_study_population",
 
 # For each of the Populations
 for (i in 1:length(Pops_for_baseline_tables)){
-
+  
   df<-Pops_for_baseline_tables[[i]]
-
+  
   if(nrow(df>0)){
     ################## BASELINE ALL POPULATION ########################
     # Calculates median of followup in years
@@ -263,7 +380,7 @@ for (i in 1:length(Pops_for_baseline_tables)){
     # fu_SD
     age_at_ID_mean <-mean(df$age_at_entry_date)
     age_at_ID_SD   <-sd(df$age_at_entry_date)
-
+    
     # Calculations
     age_at_ID_12_20.99_count <- sum(df$age_groups == "12-20.99")
     age_at_ID_21_30.99_count <- sum(df$age_groups == "21-30.99")
@@ -274,7 +391,7 @@ for (i in 1:length(Pops_for_baseline_tables)){
     age_at_ID_21_30.99_perc  <- (age_at_ID_21_30.99_count/nrow(df)) * 100
     age_at_ID_31_40.99_perc  <- (age_at_ID_31_40.99_count/nrow(df)) * 100
     age_at_ID_41_55.99_perc  <- (age_at_ID_41_55.99_count/nrow(df)) * 100
-
+    
     # Create dataframe
     names<-c("Follow-up, years - median",
              "Follow-up, years - IQR",
@@ -291,7 +408,7 @@ for (i in 1:length(Pops_for_baseline_tables)){
              "31.0-40.99 years_perc",
              "41.0-55.99 years_count",
              "41.0-55.99 years_perc")
-
+    
     values<-c(as.character(round(fu_median,1)),
               as.character(round(fu_IQR,1)),
               as.character(round(fu_min,2)),
@@ -307,7 +424,7 @@ for (i in 1:length(Pops_for_baseline_tables)){
               as.character(round(age_at_ID_31_40.99_perc,1)),
               as.character(age_at_ID_41_55.99_count),
               as.character(round(age_at_ID_41_55.99_perc),1))
-
+    
     # Creates baseline table
     baseline<-data.table(names,values)
     # print statement

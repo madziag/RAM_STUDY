@@ -1,5 +1,5 @@
 # Get contraindicated codes
-source(paste0(pre_dir, "parameters/RAM_codes_per_indication.R"))
+source(paste0(pre_dir, "parameters/ATC_for_contra_and_teratogenic.R"))
 
 if (file.exists(paste0(objective3_temp_dir, pop_prefix,"_RAM_general_concomit_data.rds"))) {
   
