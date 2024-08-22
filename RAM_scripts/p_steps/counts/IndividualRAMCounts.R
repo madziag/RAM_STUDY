@@ -72,7 +72,9 @@ saveRDS(RAM_user_counts, paste0(medicines_counts_dir,"/", pop_prefix, "_RAM_user
 # RAMS in retinoid
 # RAMs_in_studypop
 # Create Indication subsets based on RAM ATC
-RAMs_in_studypop_unique<-unique(RAMs_in_studypop)
+# RAMS in studypop => all RAM records
+
+RAMs_in_studypop<-unique(RAMs_in_studypop) # this should be records 
 # Create subsets for each of the indications - based on the Retinoid not RAM
 RAM_data_psoriasis<-RAMs_in_studypop[ATC.retinoid=="D05BB02",][,indication:="psoriasis"]
 RAM_data_acne<-RAMs_in_studypop[ATC.retinoid=="D10BA01",][,indication:="acne"]
@@ -114,7 +116,7 @@ RAM_data_per_indication_all_unique<-unique(RAM_data_per_indication_all,by=c("per
 # Count per year month ATC code 
 RAM_record_counts_per_indication_unique<-RAM_data_per_indication_all_unique[,.N, by = .(ATC.RAM,indication,period)]
 # Change table format form long to wide
-RAM_record_counts_per_indication1_unique<-dcast(RAM_record_counts_per_indication, ATC.RAM+indication~period, value.var = "N")
+RAM_record_counts_per_indication1_unique<-dcast(RAM_record_counts_per_indication_unique, ATC.RAM+indication~period, value.var = "N")
 
 if("pre"%!in%colnames(RAM_record_counts_per_indication1_unique)) {RAM_record_counts_per_indication1_unique[,pre :=0]}
 if("post"%!in%colnames(RAM_record_counts_per_indication1_unique)){RAM_record_counts_per_indication1_unique[,post:=0]}
