@@ -1,3 +1,4 @@
+
 #Author: Magdalena Gamba M.D.
 #email: m.a.gamba@uu.nl
 #Organisation: Utrecht University, Utrecht, The Netherlands
@@ -65,4 +66,3 @@ names(codelist_all)<-names(codelist_list)
 # Cleanup 
 rm(list = noquote(names(codelist_list)))
 rm(codelist, codelist_list, codelist_CPRD, codelist_PHARMO)
-
