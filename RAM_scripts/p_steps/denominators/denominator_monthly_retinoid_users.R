@@ -1,33 +1,33 @@
-
 #Author: Magdalena Gamba M.D.
 #email: m.a.gamba@uu.nl
 #Organisation: Utrecht University, Utrecht, The Netherlands
 #Date: 10/12/2021
 
+##################################################################################################################
 # Same code as in denominator_monthly_WOCBP only here it is run on the subset of that population (retinoid users)
+##################################################################################################################
 
-# Create a subset of study population who has ever used Retinoids 
-# Read in Retinoid records that were created from monthly counts ATC
+## Load retinoid records (generated from monthly_counts_ATC.R)
 retinoid_meds<-as.data.table(readRDS(paste0(medications_pop, pop_prefix, "_Retinoid_MEDS.rds")))
-# all retinoid users 
-#flowchart
+### for flowchart ###
 all_retinoid_users<-length(unique(retinoid_meds$person_id))
 
-# Retinoid use should be between study entry and exit to be counted 
+## keep retinoid prescriptions that are dated between entry into study and exit out of study dates
+## we use entry_date-90 because prescriptions could have been started before entry into study date and be actively used as we go into the study period 
 retinoid_meds<-retinoid_meds[Date>=entry_date-90 & Date<=exit_date,]
-# after excluding meds that fall outside of entry and exit dates 
-#flowchart
+### for flowchart ###
 retinoid_within_entry_exit<-length(unique(retinoid_meds[,person_id]))
-# remove duplicates
+
+## remove any duplicates on person_id to get 1 row per retinoid user. 
 retinoid_users<- as.data.table(unique(retinoid_meds, by = c("person_id")))[,c("person_id")]
 
-# Get study population subset i.e only those who have retinoid prescriptions 
+## create a subset of the retinoid users from the study population  
 retinoid_study_population<-as.data.table(merge(study_population, retinoid_users, by = "person_id")) 
 
-# Saves file
+## Save data
 saveRDS(data.table(retinoid_study_population), paste0(populations_dir, pop_prefix, "_retinoid_study_population.rds"))
 
-# this script counts the number of eligible participants per month (as persons may leave and enter the database)
+## this script counts the number of eligible participants per month (as persons may leave and enter the database)
 
 if(nrow(retinoid_study_population)>0){
   # Sets start and end dates 

@@ -97,40 +97,64 @@ if(nrow(RAM_concomit)>0){
   RAM_concomit<-RAM_concomit[,-c("end.episode.gap.days.retinoid","next.episode.start.retinoid","concomit")]
   # rearrange columns
   setcolorder(RAM_concomit, c("person_id", "episode.start.RAM","episode.end.RAM","ATC.RAM","episode.start.retinoid","episode.end.retinoid","ATC.retinoid","birth_date","entry_date","exit_date","current_age", "age_group","year","month"))
-  # For indication counts # all contraindication records
-  RAM_concomit_per_indication<-RAM_concomit
+  
+  ### RECORDS ###
+  # count all records that fill the concomitance criteria
+  RAM_concomit_record_counts<-RAM_concomit[,.N, by = .(year,month)]
+  # Adjust for PHARMO 
+  if(is_PHARMO){RAM_concomit_record_counts<-RAM_concomit_record_counts[year < 2020,]} else {RAM_concomit_record_counts<-RAM_concomit_record_counts[year < 2021,]}
+  # Merge with empty df (for counts that do not have counts for all months and years of study)
+  RAM_concomit_record_counts <-as.data.table(merge(x = empty_df, y = RAM_concomit_record_counts, by = c("year", "month"), all.x = TRUE))
+  # Fills in missing values with 0
+  RAM_concomit_record_counts[is.na(RAM_concomit_record_counts[,N]), N:=0]
+  # Column detects if data is available this year or not #3-> data is not available, 0 values because data does not exist; 16-> data is available, any 0 values are true
+  RAM_concomit_record_counts[year<min_data_available|year>max_data_available,true_value:=3][year>=min_data_available&year<=max_data_available,true_value:=16]
+  # Masking is not applied before stratification
+  RAM_concomit_record_counts[,masked:=0]
+  # Create YM variable 
+  RAM_concomit_record_counts<-within(RAM_concomit_record_counts, YM<- sprintf("%d-%02d", year, month))
+  # This does not have denominator (only user counts)
+  # Keeps necessary columns 
+  RAM_concomit_record_counts<-RAM_concomit_record_counts[,c("YM","N","masked","true_value")]
+  # Save file 
+  # Saves files in medicine counts folder
+  saveRDS(RAM_concomit_record_counts, paste0(objective3_dir, "/", pop_prefix, "_RAM_generalconcomit_RECORDS_counts.rds"))
+  # Saves concomitant data (all)
+  saveRDS(RAM_concomit, paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_RECORDS_data.rds")) 
+  
+  ### USERS ###
   ### General Concomitance ###
   # Get 1 per person id per month-year
   RAM_concomit_user<- unique(RAM_concomit, by=c("person_id", "year", "month"))
   # Concomitant Counts 
-  RAM_concomit_counts<-RAM_concomit_user[,.N, by = .(year,month)]
+  RAM_concomit_user_counts<-RAM_concomit_user[,.N, by = .(year,month)]
   # Adjust for PHARMO
-  if(is_PHARMO){RAM_concomit_counts<-RAM_concomit_counts[year < 2020,]} else {RAM_concomit_counts<-RAM_concomit_counts[year < 2021,]}
+  if(is_PHARMO){RAM_concomit_user_counts<-RAM_concomit_user_counts[year < 2020,]} else {RAM_concomit_user_counts<-RAM_concomit_user_counts[year < 2021,]}
   # Merge with empty df (for counts that do not have counts for all months and years of study)
-  RAM_concomit_counts <-as.data.table(merge(x = empty_df, y = RAM_concomit_counts, by = c("year", "month"), all.x = TRUE))
+  RAM_concomit_user_counts <-as.data.table(merge(x = empty_df, y = RAM_concomit_user_counts, by = c("year", "month"), all.x = TRUE))
   # Fills in missing values with 0
-  RAM_concomit_counts[is.na(RAM_concomit_counts[,N]), N:=0]
+  RAM_concomit_user_counts[is.na(RAM_concomit_user_counts[,N]), N:=0]
   # Column detects if data is available this year or not #3-> data is not available, 0 values because data does not exist; 16-> data is available, any 0 values are true
-  RAM_concomit_counts[year<min_data_available|year>max_data_available,true_value:=3][year>=min_data_available&year<=max_data_available,true_value:=16]
+  RAM_concomit_user_counts[year<min_data_available|year>max_data_available,true_value:=3][year>=min_data_available&year<=max_data_available,true_value:=16]
   # Masking is not applied before stratification
-  RAM_concomit_counts[,masked:=0]
+  RAM_concomit_user_counts[,masked:=0]
   # Create YM variable 
-  RAM_concomit_counts<-within(RAM_concomit_counts, YM<- sprintf("%d-%02d", year, month))
+  RAM_concomit_user_counts<-within(RAM_concomit_user_counts, YM<- sprintf("%d-%02d", year, month))
   # Denominator => Number of prevalent RAM users that month
-  RAM_concomit_rates<-merge(x = RAM_concomit_counts, y = retinoid_prevalence_counts, by = c("YM"), all.x = TRUE)
+  RAM_concomit_user_rates<-merge(x = RAM_concomit_user_counts, y = retinoid_prevalence_counts, by = c("YM"), all.x = TRUE)
   # Calculates rates
-  RAM_concomit_rates<-RAM_concomit_rates[,rates:=round(as.numeric(N)/as.numeric(Freq),5)][,rates:=rates*1000][is.nan(rates)|is.na(rates), rates:=0]
+  RAM_concomit_user_rates<-RAM_concomit_user_rates[,rates:=round(as.numeric(N)/as.numeric(Freq),5)][,rates:=rates*1000][is.nan(rates)|is.na(rates), rates:=0]
   # Keeps necessary columns 
-  RAM_concomit_rates<-RAM_concomit_rates[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
+  RAM_concomit_user_rates<-RAM_concomit_user_rates[,c("YM", "N", "Freq", "rates", "masked", "true_value")]
   # Saves files in medicine counts folder
-  saveRDS(RAM_concomit_rates, paste0(objective3_dir, "/", pop_prefix, "_RAM_general_concomit_per_user_counts.rds"))
-  # Saves concomitant data (all)
-  saveRDS(RAM_concomit, paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_data.rds")) 
+  saveRDS(RAM_concomit_user_rates, paste0(objective3_dir, "/", pop_prefix, "_RAM_general_concomit_USERS_counts.rds"))
+
   
   ################ concomitance by Age Group ###################  
   # Count concomitance by age, month, year
-  concomit_by_age<-RAM_concomit[,.N, by = .(year,month, age_group)]
-  
+  concomit_by_age<-RAM_concomit_user[,.N, by = .(year,month, age_group)]
+  print("HERE I AM AFTER!!!")
+  print(RAM_concomit_user_rates)
   # for each unique age-group, create a counts df with rates 
   for(group in 1:length(unique(concomit_by_age$age_group))){
     # Create a subset of age group
@@ -142,7 +166,7 @@ if(nrow(RAM_concomit)>0){
     # Create YM variable 
     each_group<-within(each_group,YM<-sprintf("%d-%02d",year,month))
     # Prepare denominator
-    concomit_count_min <- RAM_concomit_rates[,c("YM","N")]
+    concomit_count_min <- RAM_concomit_user_rates[,c("YM","N")]
     setnames(concomit_count_min,"N","Freq")
     # Merge age-group subset count with all prevalent counts 
     age_group_concomit_count<-merge(x=each_group,y=concomit_count_min,by=c("YM"),all.x=TRUE)
@@ -158,7 +182,7 @@ if(nrow(RAM_concomit)>0){
     age_group_concomit_count<-age_group_concomit_count[,c("YM","N","Freq","rates","masked")]
     
     # Save files in medicine counts folder
-    saveRDS(age_group_concomit_count, (paste0(objective3_strat_dir,"/", pop_prefix,"_RAM_general_concomitance_counts_", unique(concomit_by_age$age_group)[group],"_age_group.rds")))
+    saveRDS(age_group_concomit_count, (paste0(objective3_strat_dir,"/", pop_prefix,"_RAM_general_concomit_USERS_counts_", unique(concomit_by_age$age_group)[group],"_age_group.rds")))
   } 
   
 } else {
@@ -183,7 +207,7 @@ RAM_unrelated_records<-unique(RAM_unrelated)
 if(nrow(RAM_unrelated_users)>0){RAM_flowchart_unrelated_users<-nrow(RAM_unrelated_users)}else{RAM_flowchart_unrelated_users<-0}
 if(nrow(RAM_unrelated_records)>0){RAM_flowchart_unrelated_records<-nrow(RAM_unrelated_records)}else{RAM_flowchart_unrelated_records<-0}
 # Clean up 
-rm(list = grep("^age_group|concomit_by|concomit_count|each_group|RAM_concomit|RAM_prev|RAM_ret|RAM_unre|retinoid_prev", ls(), value = TRUE))
+rm(list = grep("^age_group|concomit_by|concomit_count|each_group|RAM_prev|RAM_ret|RAM_unre|retinoid_prev|RAM_concomit_user", ls(), value = TRUE))
 
 
 

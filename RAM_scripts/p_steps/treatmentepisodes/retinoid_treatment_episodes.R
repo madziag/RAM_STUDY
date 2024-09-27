@@ -17,6 +17,7 @@
 ## If treatment episode end is after exit study date, then change treatment episode end to exit study date 
 ## If treatment episode start is after exit study date, then exclude episode. 
 ## Treatment episode end has to come after treatment episode start
+
 ########################################################################################################################
 ########################################################################################################################
 ########################################################################################################################
@@ -112,6 +113,7 @@ if(length(retinoid_episode_files)>0){
   # Saves back in treatment episode folder - result is one data frame with treatment episodes for all retinoid ATC's 
   if(nrow(retinoid_episodes>0)){saveRDS(retinoid_episodes, (paste0(retinoid_treatment_episodes, pop_prefix, "_Retinoid_CMA_treatment_episodes.rds")))}
 }
+
 
 # Clean up 
 rm(list= grep("^actual|^cma|^split|^treat|retinoid_episode", ls(), value = TRUE))
