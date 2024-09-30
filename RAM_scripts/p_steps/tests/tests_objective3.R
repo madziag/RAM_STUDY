@@ -68,7 +68,8 @@ if (length(datasets) > 0) {
 } 
 
 # sum 'N' by 'YM' across age groups
-genconcomit_age_group_sums<-genconcomit_age_groups_combined[,.(age_group_N_sum=sum(N,na.rm=TRUE),Freq=unique(Freq)), by = YM]
+genconcomit_age_group_sums<-genconcomit_age_groups_combined[,.(age_group_N_sum=sum(N,na.rm=TRUE),Freq=max(Freq)), by = YM]
+
 # merge the summed age group data with genconcomit_all by 'YM'
 genconcomit_age_group_merged<-merge(genconcomit_all_users[,.(YM,all_N=N)],genconcomit_age_group_sums,by="YM",all.x=TRUE)
 #check
@@ -101,7 +102,7 @@ genconcomit.indication.num.total_vs_genconcomit.num<-nrow(genconcomit_indication
 genconcomit.indication.num.total_vs_genconcomit.indication.denom<-nrow(genconcomit_indication_merged[indication_N_sum!=Freq,])
 genconcomit.num_vs_genconcomit.indication.denom<-nrow(genconcomit_indication_merged[all_N!=Freq,])
 
-# 7. contraindicated user counts < contraindicated record counts
+# 7. contraindicated user counts <= contraindicated record counts
 contra_users_records_merged<-merge(contra_all_records[,.(YM,N,Freq)],contra_all_users[,.(YM,N,Freq)],by="YM",suffixes=c("_records","_users"))
 #check
 contra.users.num_lessthan_contra.records.num<-nrow(contra_users_records_merged[N_records<N_users,])

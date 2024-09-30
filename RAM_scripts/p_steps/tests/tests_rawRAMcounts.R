@@ -10,7 +10,7 @@
 ###############################################################################
 ###############################################################################
 ###############################################################################
-# 1. Record counts > User Counts for each ATC (PRE & POST)
+# 1. Record counts >= User Counts for each ATC (PRE & POST)
 RAM_records_users_merged<-merge(RAM_records_all[,.(ATC.RAM,pre,post)],RAM_users_all[,.(ATC.RAM,pre,post)],by="ATC.RAM",suffixes=c("_records","_users"))
 #check
 RAM.records.pre_lessthan_RAMusers.pre<-nrow(RAM_records_users_merged[pre_records<pre_users,])

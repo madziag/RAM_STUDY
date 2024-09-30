@@ -113,3 +113,6 @@ retinoid_incidence<-load_if_exists(paste0(g_output_dir,"/medicines_counts/ALL_Re
 retinoid_prevalence<-load_if_exists(paste0(g_output_dir,"/medicines_counts/ALL_Retinoid_prevalence_counts.rds"))
 retinoid_discontinued<-load_if_exists(paste0(g_output_dir,"/medicines_counts/ALL_Retinoid_discontinued_counts.rds"))
 
+### POPULATION COUNTS ###
+population_counts_flowchart<-load_if_exists(paste0(g_output_dir,"/baseline_tables/ALL_flowchart_baseline_tables.rds"))
+

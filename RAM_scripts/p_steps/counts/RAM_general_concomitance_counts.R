@@ -153,8 +153,6 @@ if(nrow(RAM_concomit)>0){
   ################ concomitance by Age Group ###################  
   # Count concomitance by age, month, year
   concomit_by_age<-RAM_concomit_user[,.N, by = .(year,month, age_group)]
-  print("HERE I AM AFTER!!!")
-  print(RAM_concomit_user_rates)
   # for each unique age-group, create a counts df with rates 
   for(group in 1:length(unique(concomit_by_age$age_group))){
     # Create a subset of age group

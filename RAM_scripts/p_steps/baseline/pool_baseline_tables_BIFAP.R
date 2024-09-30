@@ -360,6 +360,50 @@ saveRDS(baselinetables_combined, paste0(projectFolder, "/baselinetables/", pop_p
 #   }
 # }
 
+# Initialize lists for names and values
+names_for_flowchart <- c()
+values_for_flowchart <- c()
+
+# Check for each variable and append to lists if it exists
+if (exists("pop_WOCBP")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_WOCBP")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_WOCBP))
+}
+
+if (exists("pop_retinoidusers")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_retinoid.users.in.WOCBP")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_retinoidusers))
+}
+
+if (exists("pop_RAMusers_in_WOCBP")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.in.WOCBP")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_WOCBP))
+}
+
+if (exists("pop_RAMusers_in_retinoidpop")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.within.retinoid.users")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_retinoidpop))
+}
+
+if (exists("pop_RAMusers_in_retinoidpop_acne")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.within.retinoid.users_acne")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_retinoidpop_acne))
+}
+
+if (exists("pop_RAMusers_in_retinoidpop_derm")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.within.retinoid.users_derm")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_retinoidpop_derm))
+}
+
+if (exists("pop_RAMusers_in_retinoidpop_psor")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.within.retinoid.users_psor")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_retinoidpop_psor))
+}
+
+# Create the flowchart data table with only the present variables
+flowchart_baseline_tables <- data.table(names_for_flowchart, values_for_flowchart)
+saveRDS(flowchart_baseline_tables, paste0(projectFolder, "/baselinetables/", pop_prefix, "_flowchart_baseline_tables.rds"))
+
 
 rm(list = grep("pop_RAMusers_in_retinoidpop|pop_WOCBP|pop_retinoidusers|pop_RAMusers_in_WOCBP|pop_RAMusers_in_retinoidpop_acne|pop_RAMusers_in_retinoidpop_derm|pop_RAMusers_in_retinoidpop_psor", ls(), value = TRUE))
 
@@ -616,6 +660,50 @@ saveRDS(baselinetables_combined, paste0(projectFolder, "/baselinetables/", pop_p
 #     cat(paste(name, "does not exist.\n"))  # Optional: Print a message if it does not exist
 #   }
 # }
+
+# Initialize lists for names and values
+names_for_flowchart <- c()
+values_for_flowchart <- c()
+
+# Check for each variable and append to lists if it exists
+if (exists("pop_WOCBP")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_WOCBP")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_WOCBP))
+}
+
+if (exists("pop_retinoidusers")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_retinoid.users.in.WOCBP")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_retinoidusers))
+}
+
+if (exists("pop_RAMusers_in_WOCBP")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.in.WOCBP")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_WOCBP))
+}
+
+if (exists("pop_RAMusers_in_retinoidpop")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.within.retinoid.users")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_retinoidpop))
+}
+
+if (exists("pop_RAMusers_in_retinoidpop_acne")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.within.retinoid.users_acne")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_retinoidpop_acne))
+}
+
+if (exists("pop_RAMusers_in_retinoidpop_derm")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.within.retinoid.users_derm")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_retinoidpop_derm))
+}
+
+if (exists("pop_RAMusers_in_retinoidpop_psor")) {
+  names_for_flowchart <- c(names_for_flowchart, "population_RAM.users.within.retinoid.users_psor")
+  values_for_flowchart <- c(values_for_flowchart, nrow(pop_RAMusers_in_retinoidpop_psor))
+}
+
+# Create the flowchart data table with only the present variables
+flowchart_baseline_tables <- data.table(names_for_flowchart, values_for_flowchart)
+saveRDS(flowchart_baseline_tables, paste0(projectFolder, "/baselinetables/", pop_prefix, "_flowchart_baseline_tables.rds"))
 
 
 rm(list = grep("pop_RAMusers_in_retinoidpop|pop_WOCBP|pop_retinoidusers|pop_RAMusers_in_WOCBP|pop_RAMusers_in_retinoidpop_acne|pop_RAMusers_in_retinoidpop_derm|pop_RAMusers_in_retinoidpop_psor", ls(), value = TRUE))

@@ -107,3 +107,5 @@ retinoid_incidence<-load_if_exists(paste0(g_output_dir,"/PC_Retinoid_incidence_c
 retinoid_prevalence<-load_if_exists(paste0(g_output_dir,"/PC_Retinoid_prevalence_counts_pooled.rds"))
 retinoid_discontinued<-load_if_exists(paste0(g_output_dir,"/PC_Retinoid_discontinued_counts_pooled.rds"))
 
+### POPULATION COUNTS ###
+population_counts_flowchart<-load_if_exists(paste0("C:/Users/mgamb/Desktop/BIFAP_results/baselinetables/PC_flowchart_baseline_tables.rds"))

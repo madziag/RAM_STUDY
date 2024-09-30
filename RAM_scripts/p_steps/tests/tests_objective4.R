@@ -12,20 +12,24 @@
 # Denominator = All RAM prescriptions in the retinoid subpopulation
 
 ### TESTS ###
-# 1. Teratogenic user denominator == RAM prevalence numerator 
-# 2. Sum of all teratogenic indication numerators == Teratogenic indication denominator == RAM Teratogenic Numerator 
-# 3. Teratogenic user numerator <= Teratogenic record numerator 
+# 1. Teratogenic user numerator < Teratogenic user denominator
+# 2. Teratogenic user denominator == RAM prevalence numerator 
+# 3. Sum of all teratogenic indication numerators == Teratogenic indication denominator == RAM Teratogenic Numerator 
+
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 if (exists("teratogenic_all_users") && is.data.table(teratogenic_all_users)){
-# 1. Teratogenic user denominator == RAM prevalence numerator 
+#  1. Teratogenic user numerator < Teratogenic user denominator
+teratogenic.num_morethan_teratogenic.denom<-nrow(teratogenic_all_users[N>Freq,])
+
+# 2. Teratogenic user denominator == RAM prevalence numerator 
 teratogenic_RAM_prevalence_merged<-merge(teratogenic_all_users[,.(YM,Freq)],prevalence_all[,.(YM,N)])
 #check
 teratogenic.user.denom_notequal_RAM_prevalence.num<-nrow(teratogenic_RAM_prevalence_merged[N!=Freq,])
 
-# 2. Sum of all teratogenic indication numerators == Teratogenic indication denominator == RAM Teratogenic Numerator 
+# 3. Sum of all teratogenic indication numerators == Teratogenic indication denominator == RAM Teratogenic Numerator 
 # combine indication files into a single table 
 datasets <- list(
   if (exists("teratogenic_indication_acne") && is.data.table(teratogenic_indication_acne)) teratogenic_indication_acne[,.(YM,N,Freq)],
@@ -50,32 +54,28 @@ teratogenic.indication.num.total_vs_teratogenic.num<-nrow(teratogenic_indication
 teratogenic.indication.num.total_vs_teratogenic.indication.denom<-nrow(teratogenic_indication_merged[indication_N_sum!=Freq,])
 teratogenic.num_vs_teratogenic.indication.denom<-nrow(teratogenic_indication_merged[all_N!=Freq,])
 
-# 3. Teratogenic user numerator <= Teratogenic record numerator 
-teratogenic_users_records_merged<-merge(teratogenic_all_records[,.(YM,N,Freq)],teratogenic_all_users[,.(YM,N,Freq)],by="YM",suffixes=c("_records","_users"))
-#check
-teratogenic.users.num_lessthan_teratogenic.records.num<-nrow(teratogenic_users_records_merged[N_records<N_users,])
 
 ### FLOWCHART ###
 names<-c(
-  # 1. Teratogenic user denominator == RAM prevalence numerator 
+  #  1. Teratogenic user numerator < Teratogenic user denominator
+  "teratogenic.num_morethan_teratogenic.denom",
+  # 2. Teratogenic user denominator == RAM prevalence numerator 
   "teratogenic.user.denom_notequal_RAM_prevalence.num",
-  # 2. Sum of all teratogenic indication numerators == Teratogenic indication denominator == RAM Teratogenic Numerator 
+  # 3. Sum of all teratogenic indication numerators == Teratogenic indication denominator == RAM Teratogenic Numerator 
   "teratogenic.indication.num.total_vs_teratogenic.num",
   "teratogenic.indication.num.total_vs_teratogenic.indication.denom",
-  "teratogenic.num_vs_teratogenic.indication.denom",
-  # 3. Teratogenic user numerator <= Teratogenic record numerator 
-  "teratogenic.users.num_lessthan_teratogenic.records.num"
+  "teratogenic.num_vs_teratogenic.indication.denom"
 )
 
 values<-c(
-  # 1. Teratogenic user denominator == RAM prevalence numerator 
+  #  1. Teratogenic user numerator < Teratogenic user denominator
+  teratogenic.num_morethan_teratogenic.denom,
+  # 2. Teratogenic user denominator == RAM prevalence numerator 
   teratogenic.user.denom_notequal_RAM_prevalence.num,
-  # 2. Sum of all teratogenic indication numerators == Teratogenic indication denominator == RAM Teratogenic Numerator 
+  # 3. Sum of all teratogenic indication numerators == Teratogenic indication denominator == RAM Teratogenic Numerator 
   teratogenic.indication.num.total_vs_teratogenic.num,
   teratogenic.indication.num.total_vs_teratogenic.indication.denom,
-  teratogenic.num_vs_teratogenic.indication.denom,
-  # 3. Teratogenic user numerator <= Teratogenic record numerator 
-  teratogenic.users.num_lessthan_teratogenic.records.num
+  teratogenic.num_vs_teratogenic.indication.denom
 )
 
 flowchart_objective4<-data.table(names, values)

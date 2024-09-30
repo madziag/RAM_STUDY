@@ -461,32 +461,21 @@ if (file.exists(paste0(objective3_temp_dir, pop_prefix, "_RAM_general_concomit_R
 #################### TERATOGENIC BY INDICATION #########################
 ############################################################################
 # teratogenic
-if (file.exists(paste0(objective4_temp_dir, pop_prefix, "_RAM_teratogenic_RECORDS_data.rds"))){
+if (file.exists(paste0(objective4_temp_dir, pop_prefix, "_RAM_teratogenic_USERS_data.rds"))){
   
-  RAM_teratogenic_RECORDS_data<-as.data.table(readRDS(paste0(objective4_temp_dir, pop_prefix, "_RAM_teratogenic_RECORDS_data.rds")))
+  RAM_teratogenic_USERS_data<-as.data.table(readRDS(paste0(objective4_temp_dir, pop_prefix, "_RAM_teratogenic_USERS_data.rds")))
   
-  if(nrow(RAM_teratogenic_RECORDS_data)>0){
-    # Get users only 
-    RAM_teratogenic_USERS_data<-unique(RAM_teratogenic_RECORDS_data, by=c("person_id", "year", "month"))
-    # Drop unneeded columns
-    RAM_teratogenic_USERS_data<-RAM_teratogenic_USERS_data[,c("person_id","ATC.RAM","Date")]
-    # Rename columns 
-    setnames(RAM_teratogenic_USERS_data,"Date","Date.RAM")
+  if(nrow(RAM_teratogenic_USERS_data)>0){
+     # Drop unneeded columns
+    RAM_teratogenic_USERS_data<-RAM_teratogenic_USERS_data[,c("person_id","ATC.RAM","year","month","ATC.retinoid")]
     ## RAM user teratogenic counts # DENOMINATOR
     RAM_teratogenic_USER_counts<-as.data.table(readRDS(paste0(objective4_dir,"/", pop_prefix, "_RAM_teratogenic_USERS_counts.rds")))
-    
-    # Merge these incident retinoid treatment episodes with RAM episodes so that we have both Retinoid and RAM dates per row
-    RAM_teratogenic_USERS_data<-retinoid_prevalence_data_first[,c("person_id","ATC.retinoid","episode.start.retinoid")][RAM_teratogenic_USERS_data,on=.(person_id)]
-    RAM_teratogenic_USERS_data<-RAM_teratogenic_USERS_data[Date.RAM>=episode.start.retinoid,]
     # Create column for indication 
     RAM_teratogenic_USERS_data[ATC.retinoid=="D05BB02",indication:="psoriasis"]
     RAM_teratogenic_USERS_data[ATC.retinoid=="D10BA01",indication:="acne"]
     RAM_teratogenic_USERS_data[ATC.retinoid=="D11AH04",indication:="dermatitis"]
     
-    RAM_teratogenic_USERS_data[,year:= year(Date.RAM)][,month:=month(Date.RAM)]
-    
     # Flowchart
-    RAM_flowchart_teratogenic_records<-nrow(RAM_teratogenic_RECORDS_data)
     RAM_flowchart_teratogenic_users<-nrow(unique(RAM_teratogenic_USERS_data, by="person_id"))
     RAM_flowchart_teratogenic_psoriasis<-nrow(unique(RAM_teratogenic_USERS_data[indication=="psoriasis",], by="person_id"))
     RAM_flowchart_teratogenic_acne<- nrow(unique(RAM_teratogenic_USERS_data[indication=="acne",], by="person_id"))
